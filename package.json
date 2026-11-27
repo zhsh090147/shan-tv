@@ -30,7 +30,7 @@
         { "target": "nsis", "arch": ["x64"] }
       ],
       "icon": "build/icons/icon.ico",
-      "artifactName": "山影视-安装版-${version}.${ext}"
+      "artifactName": "ShanTV-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
