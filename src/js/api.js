@@ -141,10 +141,13 @@ async function handleApiRequest(url) {
                 if (videoDetail.vod_play_url) {
                     // 分割不同播放源
                     const playSources = videoDetail.vod_play_url.split('$$$');
-                    
+
                     // 提取第一个播放源的集数（通常为主要源）
                     if (playSources.length > 0) {
-                        const mainSource = playSources[0];
+                        let mainSource = playSources[0];
+                        // 部分源（如量子资源）第一段是分享页，直链 m3u8 在后面的段里——优先选含 m3u8 的段
+                        const directSource = playSources.find(src => src.includes('.m3u8'));
+                        if (directSource) mainSource = directSource;
                         const episodeList = mainSource.split('#');
                         
                         // 从每个集数中提取URL
