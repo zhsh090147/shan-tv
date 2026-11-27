@@ -49,6 +49,49 @@ public class MainActivity extends Activity {
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                // TV 模式：把 config.js 里的代理地址改写为 Cloudflare Pages 代理
+                // （带 KV 缓存、机房网络，与网页版同一条加速链路，实测鉴权兼容），
+                // 并附加 fetch 兜底：Cloudflare 不可达时自动回退本地代理 /proxy/
+                if (isTv && request != null
+                        && "GET".equals(request.getMethod())
+                        && request.getUrl() != null
+                        && request.getUrl().getPath() != null
+                        && request.getUrl().getPath().endsWith("/js/config.js")) {
+                    try {
+                        java.io.InputStream in = getAssets().open("public/js/config.js");
+                        byte[] raw = readAll(in);
+                        in.close();
+                        String src = new String(raw, java.nio.charset.StandardCharsets.UTF_8);
+                        String patch = "const PROXY_URL='https://libretv-74y.pages.dev/proxy/';"
+                                + "window.__CF_PROXY_FALLBACK='/proxy/';\n"
+                                + ";(function(){try{"
+                                + "var FB=window.__CF_PROXY_FALLBACK;"
+                                + "var CF='https://libretv-74y.pages.dev/proxy/';"
+                                + "var of=window.fetch.bind(window);"
+                                + "function toLocal(u){return FB+u.slice(CF.length);}"
+                                + "window.fetch=function(input,init){"
+                                + "try{var u=(typeof input==='string')?input:((input&&input.url)||'');"
+                                + "if(u.indexOf(CF)===0){"
+                                + "return of(u,init).then(function(r){"
+                                + "if(r.ok)return r;"
+                                + "return of(toLocal(u),init).then(function(r2){return r2.ok?r2:r;}).catch(function(){return r;});"
+                                + "},function(e){return of(toLocal(u),init);});}"
+                                + "return of(input,init);"
+                                + "}catch(e){return of(input,init);}};"
+                                + "}catch(e){}})();\n";
+                        String out = src.replace("const PROXY_URL = '/proxy/';", patch);
+                        byte[] data = out.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                        return new WebResourceResponse("application/javascript", "utf-8",
+                                new java.io.ByteArrayInputStream(data));
+                    } catch (Exception e) {
+                        // 改写失败则按原样加载
+                    }
+                }
+                return null;
+            }
+
+            @Override
             public void onPageFinished(WebView view, String url) {
                 if (!isTv) return;
                 if (url != null && url.contains("tv.html")) {
@@ -86,6 +129,14 @@ public class MainActivity extends Activity {
         }
         // 电视从专用 TV 首页启动；手机保持原首页
         webView.loadUrl(isTv ? "http://127.0.0.1:17891/tv.html" : "http://127.0.0.1:17891/");
+    }
+
+    private byte[] readAll(java.io.InputStream in) throws java.io.IOException {
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+        return out.toByteArray();
     }
 
     @Override
