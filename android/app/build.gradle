@@ -25,7 +25,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            if (rootProject.file('keystore.properties').exists()) {
+            if (rootProject.file('app/release.keystore').exists()) {
                 signingConfig signingConfigs.release
             }
         }
