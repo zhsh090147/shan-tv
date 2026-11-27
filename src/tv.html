@@ -160,7 +160,8 @@
                 const rate = item.rate && parseFloat(item.rate) > 0
                     ? '<span class="rate">' + escapeHtml(item.rate) + '</span>' : '';
                 const img = item.cover
-                    ? '<img loading="lazy" alt="' + escapeHtml(item.title) + '" src="' + escapeHtml(item.cover) + '">'
+                    ? '<img loading="lazy" alt="' + escapeHtml(item.title) + '" src="' + escapeHtml(item.cover)
+                      + '" onerror="this.onerror=null;this.src=this.src.replace(\'https://libretv-74y.pages.dev/proxy/\',\'/proxy/\');">'
                     : '';
                 return '<div class="card" tabindex="0" data-title="' + escapeHtml(item.title) + '" data-clickable="1">'
                     + '<div class="poster-wrap">' + img + rate + '</div>'
