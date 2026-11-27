@@ -115,7 +115,7 @@ public class LocalServer extends NanoHTTPD {
                 return r;
             }
         } catch (Exception e) {
-            return newFixedLengthResponse(Response.Status.BAD_GATEWAY, "text/plain; charset=utf-8", "proxy error: " + e.getMessage());
+            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain; charset=utf-8", "proxy error: " + e.getMessage());
         }
     }
 
