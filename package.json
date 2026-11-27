@@ -1,0 +1,56 @@
+{
+  "name": "shan-tv",
+  "version": "1.0.0",
+  "description": "山影视 - 内置网站与代理的离线影视应用",
+  "main": "electron/main.js",
+  "author": "周山",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win --x64",
+    "dist:win-portable": "electron-builder --win --x64 --dir"
+  },
+  "build": {
+    "appId": "com.zhshan.shantv",
+    "productName": "山影视",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*"
+    ],
+    "extraResources": [
+      { "from": "src", "to": "src", "filter": ["**/*", "!node_modules/**"] },
+      { "from": "node_modules", "to": "node_modules" },
+      { "from": "build", "to": "build" }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "icon": "build/icons/icon.ico",
+      "artifactName": "山影视-安装版-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "山影视"
+    },
+    "asar": true
+  },
+  "devDependencies": {
+    "electron": "33.2.0",
+    "electron-builder": "24.13.3"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "node-fetch": "^3.3.2"
+  }
+}
