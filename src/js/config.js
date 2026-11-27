@@ -98,7 +98,7 @@ const API_SITES = {
         name: '无尽资源'
     },
     liangzi: {
-        api: 'https://cj.lziapi.com',
+        api: 'https://cj.lziapi.com/api.php/provide/vod',
         name: '量子资源',
     },
     wwzy: {
