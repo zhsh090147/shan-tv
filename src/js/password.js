@@ -112,9 +112,11 @@ async function sha256(message) {
 function showPasswordModal() {
     const passwordModal = document.getElementById('passwordModal');
     if (passwordModal) {
-        // 防止出现豆瓣区域滚动条
-        document.getElementById('doubanArea').classList.add('hidden');
-        document.getElementById('passwordCancelBtn').classList.add('hidden');
+        // 防止出现豆瓣区域滚动条（doubanArea 仅存在于主页，其他页面需空值保护）
+        const doubanArea = document.getElementById('doubanArea');
+        if (doubanArea) doubanArea.classList.add('hidden');
+        const cancelBtn = document.getElementById('passwordCancelBtn');
+        if (cancelBtn) cancelBtn.classList.add('hidden');
 
         // 检查是否需要强制设置密码
         if (isPasswordRequired()) {
@@ -174,9 +176,10 @@ function hidePasswordModal() {
 
         passwordModal.style.display = 'none';
 
-        // 如果启用豆瓣区域则显示豆瓣区域
-        if (localStorage.getItem('doubanEnabled') === 'true') {
-            document.getElementById('doubanArea').classList.remove('hidden');
+        // 如果启用豆瓣区域则显示豆瓣区域（仅主页有 doubanArea）
+        const doubanArea = document.getElementById('doubanArea');
+        if (doubanArea && localStorage.getItem('doubanEnabled') === 'true') {
+            doubanArea.classList.remove('hidden');
             if (typeof window.initDouban === 'function') window.initDouban();
         }
     }
