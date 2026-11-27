@@ -1,0 +1,120 @@
+name: 构建山影视 exe / apk
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-exe:
+    name: 构建 Windows exe
+    runs-on: windows-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci || npm install
+
+      - name: 构建 exe (NSIS 安装版)
+        run: npx electron-builder --win --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 列出产物
+        run: Get-ChildItem -Path dist -File | Select-Object Name,Length
+
+      - name: 上传 exe 为 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: exe
+          path: dist/*.exe
+          if-no-files-found: error
+
+  build-apk:
+    name: 构建 Android apk
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 安装 Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 授予 gradlew 执行权限
+        run: chmod +x android/gradlew
+
+      - name: 生成调试签名密钥
+        working-directory: android
+        run: |
+          keytool -genkeypair -v -keystore app/release.keystore \
+            -alias shantv -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass shantv2026 -keypass shantv2026 \
+            -dname "CN=ShanTV, OU=Class2414, O=Shan, L=Xiangtan, S=Hunan, C=CN"
+
+      - name: 构建 apk (release)
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: 列出产物
+        run: find android/app/build/outputs/apk -name "*.apk" -exec ls -lh {} \;
+
+      - name: 上传 apk 为 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+  release:
+    name: 发布 Release
+    needs: [build-exe, build-apk]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下载 exe 产物
+        uses: actions/download-artifact@v4
+        with:
+          name: exe
+          path: artifacts/exe
+
+      - name: 下载 apk 产物
+        uses: actions/download-artifact@v4
+        with:
+          name: apk
+          path: artifacts/apk
+
+      - name: 发布到 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/exe/*.exe
+            artifacts/apk/*.apk
+          generate_release_notes: true
+          body: |
+            ## 山影视 - 完整离线版
+
+            **Windows 用户**：下载 `山影视-安装版-*.exe`，双击安装，桌面出现图标，点开即用。
+
+            **Android 用户**：下载 `app-release.apk`，安装后点开即用（需允许安装未知来源）。
+
+            内置网站文件与播放代理，不依赖云端部署。首次打开无需输入密码。
+
+            提示：影视源来自互联网，播放需要联网。
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
