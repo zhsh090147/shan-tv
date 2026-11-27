@@ -684,18 +684,21 @@ async function search() {
                 const proxiedUrl = window.ProxyAuth?.addAuthToProxyUrl ?
                     await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(apiUrl)) :
                     PROXY_URL + encodeURIComponent(apiUrl);
+                // 记录源响应耗时（用于按播放/加载速度排序）
+                const speedStart = performance.now();
                 const response = await fetch(proxiedUrl, {
                     headers: API_CONFIG.search.headers,
                     signal: controller.signal
                 });
-                
+
                 clearTimeout(timeoutId);
-                
+
                 if (!response.ok) {
                     return [];
                 }
-                
+
                 const data = await response.json();
+                const sourceSpeedMs = Math.round(performance.now() - speedStart);
                 
                 if (!data || !data.list || !Array.isArray(data.list) || data.list.length === 0) {
                     return [];
@@ -708,6 +711,7 @@ async function search() {
                     ...item,
                     source_name: apiName,
                     source_code: apiId,
+                    source_speed_ms: sourceSpeedMs,
                     api_url: apiId.startsWith('custom_') ? getCustomApiInfo(apiId.replace('custom_', ''))?.url : undefined
                 }));
                 
@@ -754,6 +758,7 @@ async function search() {
                                     ...item,
                                     source_name: apiName,
                                     source_code: apiId,
+                                    source_speed_ms: sourceSpeedMs,
                                     api_url: apiId.startsWith('custom_') ? getCustomApiInfo(apiId.replace('custom_', ''))?.url : undefined
                                 }));
                             } catch (error) {
@@ -791,6 +796,13 @@ async function search() {
             if (Array.isArray(results) && results.length > 0) {
                 allResults = allResults.concat(results);
             }
+        });
+
+        // 按源响应速度排序（快→慢；源响应快通常播放加载也快）
+        allResults.sort((a, b) => {
+            const sa = typeof a.source_speed_ms === 'number' ? a.source_speed_ms : Number.MAX_SAFE_INTEGER;
+            const sb = typeof b.source_speed_ms === 'number' ? b.source_speed_ms : Number.MAX_SAFE_INTEGER;
+            return sa - sb;
         });
         
         // 更新搜索结果计数
@@ -884,6 +896,14 @@ async function search() {
             const sourceCount = titleSourceMap[titleKey] ? titleSourceMap[titleKey].size : 1;
             const countBadge = sourceCount > 1 ?
                 `<span class="text-xs py-0.5 px-1.5 rounded-full bg-green-500 bg-opacity-20 text-green-300" title="${sourceCount} 个源可播放">${sourceCount} 源</span>` : '';
+            // 源速度徽章：绿<1s / 黄<2.5s / 红≥2.5s（结果已按此排序）
+            let speedBadge = '';
+            if (typeof item.source_speed_ms === 'number') {
+                const sCls = item.source_speed_ms < 1000 ? 'bg-green-500 bg-opacity-20 text-green-300'
+                    : (item.source_speed_ms < 2500 ? 'bg-yellow-500 bg-opacity-20 text-yellow-300'
+                    : 'bg-red-500 bg-opacity-20 text-red-300');
+                speedBadge = `<span class="text-xs py-0.5 px-1.5 rounded-full ${sCls}" title="源响应 ${item.source_speed_ms}ms，响应快加载也快">⚡${(item.source_speed_ms / 1000).toFixed(1)}s</span>`;
+            }
             const sourceCode = item.source_code || '';
             
             // 添加API URL属性，用于详情获取
@@ -926,7 +946,7 @@ async function search() {
                             </div>
                             
                             <div class="flex justify-between items-center mt-1 pt-1 border-t border-gray-800">
-                                <div class="flex flex-wrap items-center gap-1">${sourceInfo}${countBadge}</div>
+                                <div class="flex flex-wrap items-center gap-1">${sourceInfo}${speedBadge}${countBadge}</div>
                                 <!-- 接口名称过长会被挤变形
                                 <div>
                                     <span class="text-gray-500 flex items-center hover:text-blue-400 transition-colors">
