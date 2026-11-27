@@ -384,10 +384,19 @@ function fetchDoubanTags() {
 function resetToHome() {
     resetSearchArea();
     updateDoubanVisibility();
+    // 回到页面顶部，确保看到完整的首页内容
+    window.scrollTo(0, 0);
 }
 
 // 加载豆瓣首页内容
+// 注意：本文件是 ES module（type="module"），顶层函数不在全局作用域，
+// 必须显式挂到 window 上，否则 HTML 里的 onclick="resetToHome()" 会报
+// ReferenceError 导致"首页"按钮失效（无法从搜索结果返回豆瓣热门首页）
 window.initDouban = initDouban;
+window.resetToHome = resetToHome;
+window.updateDoubanVisibility = updateDoubanVisibility;
+window.renderDoubanTags = renderDoubanTags;
+window.renderDoubanMovieTvSwitch = renderDoubanMovieTvSwitch;
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initDouban);
 } else {
