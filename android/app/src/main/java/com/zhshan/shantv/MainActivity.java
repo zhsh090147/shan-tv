@@ -47,33 +47,36 @@ public class MainActivity extends Activity {
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         s.setUserAgentString(s.getUserAgentString() + " ShanTV/1.0");
 
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                if (!isTv) return;
+                if (url != null && url.contains("tv.html")) {
+                    // TV 专用首页：自带 1280 宽的电视版式，无需注入
+                    return;
+                }
+                // 其余页面(搜索/播放/观看)：固定 1280 布局宽 + 整体放大 1.5 倍，
+                // 修复电视上文字过小/海报比例失衡，同时保持横屏信息量
+                String js = "(function(){"
+                        + "var m=document.querySelector('meta[name=\"viewport\"]');"
+                        + "if(m){m.setAttribute('content','width=1280');}"
+                        + "var st=document.getElementById('shan-tv-style');"
+                        + "if(!st){st=document.createElement('style');st.id='shan-tv-style';"
+                        + "st.textContent='body{zoom:1.5}"
+                        + "*:focus{outline:4px solid #ff5c8a!important;outline-offset:3px;border-radius:8px}"
+                        + "';document.head.appendChild(st);}"
+                        + "})()";
+                view.evaluateJavascript(js, null);
+            }
+        });
+        webView.setWebChromeClient(new WebChromeClient());
+
         if (isTv) {
-            // 电视适配：
-            // 电视屏是 1080p 低密度，网页会按桌面宽屏(1920 CSS px)排版，
-            // 导致海报网格巨大、文字(14 CSS px)小到看不清。
-            // 1) 关闭系统字体自动放大，避免布局比例失衡
+            // 关闭系统字体自动缩放，避免破坏布局比例
             s.setTextZoom(100);
             s.setSupportZoom(false);
             s.setBuiltInZoomControls(false);
-            // 2) 每个页面加载完后，把 viewport 强制为 720 CSS px 宽，
-            //    网页按"手机/平板"比例排版，再由 WebView 整体放大约 2.7 倍铺满电视屏，
-            //    文字和图片比例恢复正常（与手机版观感一致）
-            webView.setWebViewClient(new WebViewClient() {
-                @Override
-                public void onPageFinished(WebView view, String url) {
-                    view.evaluateJavascript(
-                            "(function(){var v='width=720';"
-                            + "var m=document.querySelector('meta[name=\"viewport\"]');"
-                            + "if(m){m.setAttribute('content',v);}"
-                            + "else{m=document.createElement('meta');"
-                            + "m.setAttribute('name','viewport');m.setAttribute('content',v);"
-                            + "document.head.appendChild(m);}})()", null);
-                }
-            });
-        } else {
-            webView.setWebViewClient(new WebViewClient());
         }
-        webView.setWebChromeClient(new WebChromeClient());
 
         try {
             server = new LocalServer(this);
@@ -81,7 +84,8 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        webView.loadUrl("http://127.0.0.1:17891/");
+        // 电视从专用 TV 首页启动；手机保持原首页
+        webView.loadUrl(isTv ? "http://127.0.0.1:17891/tv.html" : "http://127.0.0.1:17891/");
     }
 
     @Override
