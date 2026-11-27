@@ -76,7 +76,24 @@ export function renderDoubanCardsUI(data, container, proxyUrl, onCardClickCallba
             if (clickableButton) {
                 clickableButton.onclick = () => onCardClickCallback(safeTitle);
             }
-            
+
+            // TV 遥控器支持：卡片可聚焦，OK/Enter/空格 触发点击
+            const focusable = clickableImgArea || card;
+            focusable.setAttribute('tabindex', '0');
+            focusable.style.cursor = 'pointer';
+            focusable.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onCardClickCallback(safeTitle);
+                }
+            });
+            focusable.addEventListener('focus', () => {
+                focusable.style.outline = '2px solid #ec4899';
+            });
+            focusable.addEventListener('blur', () => {
+                focusable.style.outline = 'none';
+            });
+
             fragment.appendChild(card);
         });
     }
