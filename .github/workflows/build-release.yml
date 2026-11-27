@@ -60,6 +60,14 @@ jobs:
       - name: 授予 gradlew 执行权限
         run: chmod +x android/gradlew
 
+      - name: 同步网站资源到 android assets
+        run: |
+          rm -rf android/app/src/main/assets/public
+          mkdir -p android/app/src/main/assets/public
+          cp -r src/* android/app/src/main/assets/public/
+          rm -rf android/app/src/main/assets/public/.github
+          ls android/app/src/main/assets/public | head -5
+
       - name: 生成调试签名密钥
         working-directory: android
         run: |
