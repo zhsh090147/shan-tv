@@ -49,7 +49,7 @@ public class LocalServer extends NanoHTTPD {
             if (uri.startsWith("/proxy/")) {
                 return handleProxy(uri, params);
             }
-            if (uri.equals("/") || uri.equals("/index.html") || uri.equals("/player.html") || uri.equals("/watch.html")) {
+            if (uri.equals("/") || uri.equals("/index.html") || uri.equals("/player.html") || uri.equals("/watch.html") || uri.equals("/tv.html")) {
                 return serveHtml(uri, params);
             }
             return serveAsset(uri);
