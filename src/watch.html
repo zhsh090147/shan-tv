@@ -2,11 +2,15 @@
 <html lang="zh">
 <head>
     <script>
-    /* 山影视离线版：预置密码验证状态，双击即用 */
+    /* 山影视离线版：预置密码验证状态，双击即用。
+       仅在离线环境（file:// 或本机 127.0.0.1/localhost，即 APK/Electron 内置服务）生效；
+       线上部署不预置，访客首次打开需输入密码。 */
     (function(){
+      var offline = location.protocol === 'file:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+      if (!offline) return;
       var H = 'ac592b987bce75f4fd69fcc068cbac7594fa8f2cebd7424932d8222ffb3e3bf0';
       try{
-        localStorage.setItem('passwordVerified', JSON.stringify({verified:true, timestamp:Date.now(), passwordHash:H}));
+        localStorage.setItem('passwordVerified_v2', JSON.stringify({verified:true, timestamp:Date.now(), passwordHash:H}));
         localStorage.setItem('proxyAuthHash', H);
       }catch(e){}
     })();
