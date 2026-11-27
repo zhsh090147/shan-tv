@@ -170,6 +170,26 @@ const API_SITES = {
     guangsu: {
         api: 'https://api.guangsuapi.com/api.php/provide/vod',
         name: '光速资源'
+    },
+    xigua: {
+        api: 'https://caiji.xgzyapi.com/api.php/provide/vod',
+        name: '西瓜资源'
+    },
+    dazhong: {
+        api: 'https://cdn.dzzyapi.com/api.php/provide/vod',
+        name: '大众资源'
+    },
+    xinmangguo: {
+        api: 'https://caiji.mgzyapi.com/api.php/provide/vod',
+        name: '新芒果资源'
+    },
+    changzhang: {
+        api: 'https://api.changzhang.tv/api.php/provide/vod',
+        name: '厂长资源'
+    },
+    kankan: {
+        api: 'https://f-1.cc/api.php/provide/vod',
+        name: '看看资源'
     }
 };
 
