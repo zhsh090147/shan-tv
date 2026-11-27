@@ -2,18 +2,30 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- TV 适配：支持电视/电视盒子的 Leanback 桌面；两项硬件均非必需，手机和 TV 都可安装 -->
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
     <application
         android:allowBackup="true"
         android:label="山影视"
         android:icon="@mipmap/ic_launcher"
+        android:banner="@drawable/banner"
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
         <activity android:name=".MainActivity" android:exported="true"
             android:configChanges="orientation|screenSize|keyboardHidden">
+            <!-- 手机/平板桌面入口 -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Android TV 桌面入口：电视上会显示 banner 卡片 -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
