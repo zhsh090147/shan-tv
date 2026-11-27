@@ -31,8 +31,8 @@ function filterByRelevance(items, query) {
 }
 
 // 全局变量
-// 默认选中实测可用的源（旧默认源 tyyszy/xiaomaomi/dyttzy/ruyi 多数已失效）
-const DEFAULT_APIS = ["bfzy","ffzyapi","mdzyapi","apibdzy","hongniu","iqiyizy","maoyan","zy360zz","moduapi","ukuapi","ffzy"];
+// 默认选中全部 41 个内置源（失效源搜索时会被自动跳过，不影响结果）
+const DEFAULT_APIS = ["dyttzy","ruyi","bfzy","tyyszy","xiaomaomi","ffzy","heimuer","zy360","wolong","hwba","jisu","dbzy","mozhua","mdzy","zuid","yinghua","baidu","wujin","liangzi","wwzy","ikun","ffzyapi","maotai","jszyapi","jszyjson","mdzyapi","zuidapi","wujinapi","apibdzy","hongniu","iqiyizy","maoyan","zy360zz","moduapi","ukuapi","guangsu","xigua","dazhong","xinmangguo","changzhang","kankan"];
 let selectedAPIs = JSON.parse(localStorage.getItem('selectedAPIs') || JSON.stringify(DEFAULT_APIS));
 let customAPIs = JSON.parse(localStorage.getItem('customAPIs') || '[]'); // 存储自定义API列表
 
@@ -59,14 +59,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // 渲染搜索历史
     renderSearchHistory();
     
-    // 旧版失效默认源迁移：若仍是旧的失效默认组合，升级为实测可用源
+    // 默认源迁移：V2=11个实测源，V3=全部41个内置源
+    // 若用户仍停留在旧默认组合，升级为新默认（手动改过选择的用户也会被重置为全选，可自行再勾选调整）
     const OLD_DEFAULT = ["tyyszy","xiaomaomi","bfzy","dyttzy","ruyi"];
+    const V2_DEFAULT = ["bfzy","ffzyapi","mdzyapi","apibdzy","hongniu","iqiyizy","maoyan","zy360zz","moduapi","ukuapi","ffzy"];
     const cur = JSON.parse(localStorage.getItem('selectedAPIs') || '[]');
     const isOldDefault = cur.length === OLD_DEFAULT.length && OLD_DEFAULT.every(x => cur.includes(x));
-    if (!localStorage.getItem('hasInitializedDefaults') || isOldDefault || !localStorage.getItem('selectedApisV2')) {
+    const isV2Default = cur.length === V2_DEFAULT.length && V2_DEFAULT.every(x => cur.includes(x));
+    if (!localStorage.getItem('hasInitializedDefaults') || isOldDefault || isV2Default || !localStorage.getItem('selectedApisV3')) {
         selectedAPIs = [...DEFAULT_APIS];
         localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
-        localStorage.setItem('selectedApisV2', 'true');
+        localStorage.setItem('selectedApisV3', 'true');
         
         // 默认选中过滤开关
         localStorage.setItem('yellowFilterEnabled', 'true');
