@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, initial-scale=1.0">
+    <title>山影视TV</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0f;
+            color: #e5e5e5;
+            font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+            width: 1280px;
+            overflow-x: hidden;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 28px 48px 10px;
+        }
+        .logo {
+            font-size: 40px;
+            font-weight: 800;
+            background: linear-gradient(to right, #f472b6, #fb923c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .logo-sub { font-size: 18px; color: #888; margin-left: 16px; margin-top: 12px; }
+        .header-btns { margin-left: auto; display: flex; gap: 16px; }
+        .hbtn {
+            background: #1c1c24;
+            color: #e5e5e5;
+            border: 1px solid #333;
+            border-radius: 12px;
+            font-size: 22px;
+            padding: 12px 30px;
+            cursor: pointer;
+        }
+        .row-section { margin: 18px 48px 0; }
+        .row-head {
+            display: flex;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .row-title { font-size: 26px; font-weight: 700; color: #fff; }
+        .row-title::before {
+            content: "";
+            display: inline-block;
+            width: 6px; height: 26px;
+            background: #f472b6;
+            border-radius: 3px;
+            margin-right: 12px;
+            vertical-align: -2px;
+        }
+        .refresh-btn {
+            margin-left: auto;
+            background: transparent;
+            border: 1px solid #444;
+            color: #aaa;
+            font-size: 18px;
+            padding: 6px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .row-scroll {
+            display: flex;
+            gap: 18px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 6px 2px 14px;
+            scroll-behavior: smooth;
+        }
+        .row-scroll::-webkit-scrollbar { display: none; }
+        .card {
+            flex: 0 0 168px;
+            cursor: pointer;
+            outline: none;
+            border-radius: 12px;
+            transition: transform .15s;
+        }
+        .card:focus {
+            outline: 4px solid #ff5c8a;
+            outline-offset: 4px;
+            transform: scale(1.06);
+            background: rgba(255,92,138,.08);
+        }
+        .poster-wrap { position: relative; width: 168px; height: 252px; border-radius: 12px; overflow: hidden; background: #16161f; }
+        .poster-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .rate {
+            position: absolute; top: 8px; left: 8px;
+            background: rgba(244,114,182,.9);
+            color: #fff; font-size: 15px; font-weight: 700;
+            padding: 2px 8px; border-radius: 8px;
+        }
+        .card-title {
+            margin-top: 8px;
+            font-size: 19px; color: #ddd;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            text-align: center;
+        }
+        .status { color: #666; font-size: 19px; padding: 30px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">山影视TV</div>
+        <div class="logo-sub">遥控器左右键选片，OK键打开</div>
+        <div class="header-btns">
+            <button class="hbtn" tabindex="0" onclick="location.href='index.html'">🔍 搜索影片</button>
+            <button class="hbtn" tabindex="0" onclick="location.href='index.html'">🎬 网页版首页</button>
+        </div>
+    </div>
+
+    <div class="row-section">
+        <div class="row-head">
+            <div class="row-title">热门电影</div>
+            <button class="refresh-btn" tabindex="0" data-type="movie">换一批</button>
+        </div>
+        <div class="row-scroll" id="row-movie"><div class="status">正在加载热门电影…</div></div>
+    </div>
+
+    <div class="row-section">
+        <div class="row-head">
+            <div class="row-title">热门电视剧</div>
+            <button class="refresh-btn" tabindex="0" data-type="tv">换一批</button>
+        </div>
+        <div class="row-scroll" id="row-tv"><div class="status">正在加载热门电视剧…</div></div>
+    </div>
+
+    <div class="row-section">
+        <div class="row-head">
+            <div class="row-title">热门综艺</div>
+            <button class="refresh-btn" tabindex="0" data-type="show">换一批</button>
+        </div>
+        <div class="row-scroll" id="row-show"><div class="status">正在加载热门综艺…</div></div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/proxy-auth.js"></script>
+    <script>
+        const TAGS = { movie: '热门', tv: '热门', show: '综艺' };
+        const pageStart = { movie: 0, tv: 0, show: 0 };
+        const PAGE_SIZE = 20;
+
+        function escapeHtml(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        async function proxyFetch(targetUrl) {
+            let url = PROXY_URL + encodeURIComponent(targetUrl);
+            if (window.addAuthToProxyUrl) url = await addAuthToProxyUrl(url);
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            return resp.json();
+        }
+
+        function renderRow(container, subjects) {
+            container.innerHTML = subjects.map(item => {
+                const rate = item.rate && parseFloat(item.rate) > 0
+                    ? '<span class="rate">' + escapeHtml(item.rate) + '</span>' : '';
+                const img = item.cover
+                    ? '<img loading="lazy" alt="' + escapeHtml(item.title) + '" src="' + escapeHtml(item.cover) + '">'
+                    : '';
+                return '<div class="card" tabindex="0" data-title="' + escapeHtml(item.title) + '" data-clickable="1">'
+                    + '<div class="poster-wrap">' + img + rate + '</div>'
+                    + '<div class="card-title">' + escapeHtml(item.title) + '</div>'
+                    + '</div>';
+            }).join('');
+        }
+
+        async function loadRow(type) {
+            const container = document.getElementById('row-' + type);
+            container.innerHTML = '<div class="status">正在加载…</div>';
+            const api = 'https://movie.douban.com/j/search_subjects?type='
+                + (type === 'show' ? 'tv' : type)
+                + '&tag=' + encodeURIComponent(TAGS[type])
+                + '&sort=recommend&page_limit=' + PAGE_SIZE
+                + '&page_start=' + pageStart[type];
+            try {
+                const data = await proxyFetch(api);
+                const subjects = (data && data.subjects) || [];
+                // 封面必须走本地代理（豆瓣有防盗链，直连会 418 黑图）
+                await Promise.all(subjects.map(async item => {
+                    if (item.cover) {
+                        try {
+                            item.cover = await addAuthToProxyUrl(PROXY_URL + encodeURIComponent(item.cover));
+                        } catch (e) { /* 保留原地址兜底 */ }
+                    }
+                }));
+                if (!subjects.length) { container.innerHTML = '<div class="status">暂无数据</div>'; return; }
+                renderRow(container, subjects);
+                container.querySelectorAll('.card').forEach(card => {
+                    card.addEventListener('click', function () {
+                        location.href = 'index.html?s=' + encodeURIComponent(this.dataset.title);
+                    });
+                    card.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            location.href = 'index.html?s=' + encodeURIComponent(this.dataset.title);
+                        }
+                    });
+                });
+            } catch (err) {
+                container.innerHTML = '<div class="status">加载失败：' + escapeHtml(err.message) + '，可按遥控器OK键重试刷新按钮</div>';
+            }
+        }
+
+        document.querySelectorAll('.refresh-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const type = this.dataset.type;
+                pageStart[type] += PAGE_SIZE;
+                loadRow(type);
+            });
+            btn.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+            });
+        });
+
+        loadRow('movie');
+        loadRow('tv');
+        loadRow('show');
+    </script>
+</body>
+</html>
