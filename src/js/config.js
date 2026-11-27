@@ -6,7 +6,7 @@ const MAX_HISTORY_ITEMS = 5;
 
 // 密码保护配置
 const PASSWORD_CONFIG = {
-    localStorageKey: 'passwordVerified',  // 存储验证状态的键名
+    localStorageKey: 'passwordVerified_v2',  // 存储验证状态的键名（v2：弃用旧键，使历史上被预置脚本污染的验证状态全部失效）
     verificationTTL: 90 * 24 * 60 * 60 * 1000,  // 验证有效期（90天，约3个月）
 };
 
