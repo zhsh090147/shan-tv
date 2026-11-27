@@ -7,43 +7,98 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #0a0a0f;
+            background: linear-gradient(180deg, #14141c 0%, #0a0a0f 45%);
             color: #e5e5e5;
             font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
             width: 1280px;
             overflow-x: hidden;
+            min-height: 100vh;
         }
+        /* ===== 顶栏 ===== */
         .header {
             display: flex;
             align-items: center;
-            padding: 28px 48px 10px;
+            padding: 30px 48px 6px;
         }
         .logo {
-            font-size: 40px;
+            font-size: 42px;
             font-weight: 800;
             background: linear-gradient(to right, #f472b6, #fb923c);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            flex: 0 0 auto;
         }
-        .logo-sub { font-size: 18px; color: #888; margin-left: 16px; margin-top: 12px; }
-        .header-btns { margin-left: auto; display: flex; gap: 16px; }
+        .header-btns { margin-left: auto; display: flex; gap: 18px; align-items: center; }
+        .search-pill {
+            display: flex; align-items: center;
+            background: #1c1c26;
+            border: 1px solid #3a3a4a;
+            border-radius: 999px;
+            padding: 14px 34px;
+            font-size: 24px;
+            color: #bbb;
+            cursor: pointer;
+            outline: none;
+        }
+        .search-pill:focus { outline: 4px solid #ff5c8a; outline-offset: 3px; color: #fff; }
         .hbtn {
             background: #1c1c24;
             color: #e5e5e5;
             border: 1px solid #333;
             border-radius: 12px;
-            font-size: 22px;
-            padding: 12px 30px;
+            font-size: 21px;
+            padding: 14px 26px;
             cursor: pointer;
+            outline: none;
         }
-        .row-section { margin: 18px 48px 0; }
-        .row-head {
+        .hbtn:focus { outline: 4px solid #ff5c8a; outline-offset: 3px; }
+        /* ===== 今日精选 Hero ===== */
+        .hero {
+            margin: 26px 48px 8px;
             display: flex;
+            gap: 36px;
             align-items: center;
-            margin-bottom: 14px;
+            background: linear-gradient(120deg, rgba(244,114,182,.14), rgba(251,146,60,.08) 55%, transparent);
+            border: 1px solid rgba(244,114,182,.25);
+            border-radius: 20px;
+            padding: 30px 40px;
+            cursor: pointer;
+            outline: none;
+            min-height: 320px;
         }
-        .row-title { font-size: 26px; font-weight: 700; color: #fff; }
+        .hero:focus { outline: 4px solid #ff5c8a; outline-offset: 5px; transform: scale(1.012); }
+        .hero-poster {
+            flex: 0 0 236px;
+            width: 236px; height: 340px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #1a1a26;
+            box-shadow: 0 14px 40px rgba(0,0,0,.55);
+        }
+        .hero-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .hero-info { flex: 1; }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(244,114,182,.9);
+            color: #fff; font-size: 18px; font-weight: 700;
+            padding: 6px 18px; border-radius: 999px;
+            letter-spacing: 2px;
+        }
+        .hero-title { font-size: 44px; font-weight: 800; color: #fff; margin: 18px 0 10px; }
+        .hero-meta { font-size: 22px; color: #f9a8c4; font-weight: 700; margin-bottom: 14px; }
+        .hero-tip { font-size: 20px; color: #999; }
+        .hero-ok {
+            margin-top: 20px;
+            display: inline-flex; align-items: center; gap: 10px;
+            background: #fff; color: #111;
+            font-size: 22px; font-weight: 700;
+            padding: 12px 30px; border-radius: 12px;
+        }
+        /* ===== 海报行 ===== */
+        .row-section { margin: 20px 48px 0; }
+        .row-head { display: flex; align-items: center; margin-bottom: 14px; }
+        .row-title { font-size: 27px; font-weight: 700; color: #fff; }
         .row-title::before {
             content: "";
             display: inline-block;
@@ -53,16 +108,19 @@
             margin-right: 12px;
             vertical-align: -2px;
         }
+        .row-sub { font-size: 17px; color: #777; margin-left: 14px; margin-top: 6px; }
         .refresh-btn {
             margin-left: auto;
             background: transparent;
             border: 1px solid #444;
             color: #aaa;
             font-size: 18px;
-            padding: 6px 18px;
+            padding: 7px 20px;
             border-radius: 10px;
             cursor: pointer;
+            outline: none;
         }
+        .refresh-btn:focus { outline: 3px solid #ff5c8a; outline-offset: 2px; color: #fff; }
         .row-scroll {
             display: flex;
             gap: 18px;
@@ -73,7 +131,7 @@
         }
         .row-scroll::-webkit-scrollbar { display: none; }
         .card {
-            flex: 0 0 168px;
+            flex: 0 0 172px;
             cursor: pointer;
             outline: none;
             border-radius: 12px;
@@ -85,7 +143,7 @@
             transform: scale(1.06);
             background: rgba(255,92,138,.08);
         }
-        .poster-wrap { position: relative; width: 168px; height: 252px; border-radius: 12px; overflow: hidden; background: #16161f; }
+        .poster-wrap { position: relative; width: 172px; height: 258px; border-radius: 12px; overflow: hidden; background: #16161f; }
         .poster-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .rate {
             position: absolute; top: 8px; left: 8px;
@@ -99,22 +157,69 @@
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             text-align: center;
         }
+        /* 最近观看：横向文字卡 */
+        .hist-card {
+            flex: 0 0 300px;
+            background: #17171f;
+            border: 1px solid #2c2c38;
+            border-radius: 14px;
+            padding: 20px 22px;
+            cursor: pointer;
+            outline: none;
+        }
+        .hist-card:focus { outline: 4px solid #ff5c8a; outline-offset: 4px; transform: scale(1.04); }
+        .hist-title {
+            font-size: 21px; font-weight: 700; color: #eee;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .hist-sub { font-size: 16px; color: #888; margin-top: 8px; }
+        .hist-bar { height: 5px; background: #2c2c38; border-radius: 3px; margin-top: 14px; overflow: hidden; }
+        .hist-bar i { display: block; height: 100%; background: linear-gradient(to right, #f472b6, #fb923c); }
         .status { color: #666; font-size: 19px; padding: 30px 0; }
+        /* ===== 底部按键提示 ===== */
+        .keybar {
+            display: flex; justify-content: center; gap: 34px;
+            padding: 26px 0 30px;
+            color: #666; font-size: 17px;
+        }
+        .keybar b {
+            background: #22222c; color: #aaa;
+            border-radius: 8px; padding: 3px 12px;
+            font-weight: 600; margin-right: 8px;
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="logo">山影视TV</div>
-        <div class="logo-sub">遥控器左右键选片，OK键打开</div>
         <div class="header-btns">
-            <button class="hbtn" tabindex="0" onclick="location.href='index.html'">🔍 搜索影片</button>
-            <button class="hbtn" tabindex="0" onclick="location.href='index.html'">🎬 网页版首页</button>
+            <div class="search-pill" tabindex="0" onclick="location.href='index.html'">🔍 想看什么，搜一下</div>
+            <button class="hbtn" tabindex="0" onclick="location.href='index.html'">网页版首页</button>
         </div>
+    </div>
+
+    <div class="hero" id="hero" tabindex="0" style="display:none">
+        <div class="hero-poster"><img id="hero-img" alt="今日精选"></div>
+        <div class="hero-info">
+            <span class="hero-badge">今日精选</span>
+            <div class="hero-title" id="hero-title"></div>
+            <div class="hero-meta" id="hero-meta"></div>
+            <div class="hero-tip">从热门片单里挑一部今晚的</div>
+            <div class="hero-ok">⏎ 按 OK 键立即观看</div>
+        </div>
+    </div>
+
+    <div class="row-section" id="sec-history" style="display:none">
+        <div class="row-head">
+            <div class="row-title">最近观看</div>
+            <div class="row-sub">接着上次的进度看</div>
+        </div>
+        <div class="row-scroll" id="row-history"></div>
     </div>
 
     <div class="row-section">
         <div class="row-head">
-            <div class="row-title">热门电影</div>
+            <div class="row-title">发现电影</div>
             <button class="refresh-btn" tabindex="0" data-type="movie">换一批</button>
         </div>
         <div class="row-scroll" id="row-movie"><div class="status">正在加载热门电影…</div></div>
@@ -122,7 +227,7 @@
 
     <div class="row-section">
         <div class="row-head">
-            <div class="row-title">热门电视剧</div>
+            <div class="row-title">发现剧集</div>
             <button class="refresh-btn" tabindex="0" data-type="tv">换一批</button>
         </div>
         <div class="row-scroll" id="row-tv"><div class="status">正在加载热门电视剧…</div></div>
@@ -130,10 +235,16 @@
 
     <div class="row-section">
         <div class="row-head">
-            <div class="row-title">热门综艺</div>
+            <div class="row-title">发现综艺</div>
             <button class="refresh-btn" tabindex="0" data-type="show">换一批</button>
         </div>
         <div class="row-scroll" id="row-show"><div class="status">正在加载热门综艺…</div></div>
+    </div>
+
+    <div class="keybar">
+        <span><b>↑↓←→</b>移动焦点</span>
+        <span><b>OK</b>确认观看</span>
+        <span><b>返回</b>退出应用</span>
     </div>
 
     <script src="js/config.js"></script>
@@ -155,6 +266,11 @@
             return resp.json();
         }
 
+        function gotoSearch(title) {
+            location.href = 'index.html?s=' + encodeURIComponent(title);
+        }
+
+        /* ===== 海报行 ===== */
         function renderRow(container, subjects) {
             container.innerHTML = subjects.map(item => {
                 const rate = item.rate && parseFloat(item.rate) > 0
@@ -170,6 +286,18 @@
             }).join('');
         }
 
+        function bindCardClicks(container) {
+            container.querySelectorAll('.card').forEach(card => {
+                card.addEventListener('click', function () { gotoSearch(this.dataset.title); });
+                card.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        gotoSearch(this.dataset.title);
+                    }
+                });
+            });
+        }
+
         async function loadRow(type) {
             const container = document.getElementById('row-' + type);
             container.innerHTML = '<div class="status">正在加载…</div>';
@@ -181,7 +309,7 @@
             try {
                 const data = await proxyFetch(api);
                 const subjects = (data && data.subjects) || [];
-                // 封面必须走本地代理（豆瓣有防盗链，直连会 418 黑图）
+                // 封面必须走代理（豆瓣有防盗链，直连会 418 黑图）
                 await Promise.all(subjects.map(async item => {
                     if (item.cover) {
                         try {
@@ -191,20 +319,63 @@
                 }));
                 if (!subjects.length) { container.innerHTML = '<div class="status">暂无数据</div>'; return; }
                 renderRow(container, subjects);
-                container.querySelectorAll('.card').forEach(card => {
-                    card.addEventListener('click', function () {
-                        location.href = 'index.html?s=' + encodeURIComponent(this.dataset.title);
-                    });
-                    card.addEventListener('keydown', function (e) {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            location.href = 'index.html?s=' + encodeURIComponent(this.dataset.title);
-                        }
-                    });
-                });
+                bindCardClicks(container);
+                if (type === 'movie') buildHero(subjects);
             } catch (err) {
-                container.innerHTML = '<div class="status">加载失败：' + escapeHtml(err.message) + '，可按遥控器OK键重试刷新按钮</div>';
+                container.innerHTML = '<div class="status">加载失败：' + escapeHtml(err.message) + '，可按 OK 键重试「换一批」</div>';
             }
+        }
+
+        /* ===== 今日精选 Hero（从热门电影里随机挑一部高分片） ===== */
+        function buildHero(subjects) {
+            const pool = subjects.filter(s => parseFloat(s.rate) >= 7.5);
+            const pick = (pool.length ? pool : subjects)[Math.floor(Math.random() * (pool.length || subjects.length))];
+            if (!pick) return;
+            const hero = document.getElementById('hero');
+            document.getElementById('hero-img').src = pick.cover || '';
+            document.getElementById('hero-img').onerror = function () {
+                this.onerror = null;
+                this.src = (this.src || '').replace('https://libretv-74y.pages.dev/proxy/', '/proxy/');
+            };
+            document.getElementById('hero-title').textContent = pick.title || '';
+            document.getElementById('hero-meta').textContent = pick.rate ? '豆瓣评分 ' + pick.rate : '';
+            hero.style.display = 'flex';
+            hero.dataset.title = pick.title || '';
+            hero.onclick = function () { gotoSearch(this.dataset.title); };
+            hero.onkeydown = function (e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); gotoSearch(this.dataset.title); }
+            };
+        }
+
+        /* ===== 最近观看 ===== */
+        function loadHistory() {
+            let history = [];
+            try { history = JSON.parse(localStorage.getItem('viewingHistory') || '[]'); } catch (e) {}
+            history = (history || []).slice(0, 10);
+            if (!history.length) return;
+            const row = document.getElementById('row-history');
+            const sec = document.getElementById('sec-history');
+            row.innerHTML = history.map(h => {
+                const pct = (h.duration && h.playbackPosition)
+                    ? Math.min(100, Math.round(h.playbackPosition / h.duration * 100)) : 0;
+                return '<div class="hist-card" tabindex="0" data-url="' + escapeHtml(h.url) + '">'
+                    + '<div class="hist-title">' + escapeHtml(h.title || '未知影片') + '</div>'
+                    + '<div class="hist-sub">' + (pct ? '已看 ' + pct + '% · 接着看' : (h.sourceName ? '来自 ' + escapeHtml(h.sourceName) : '点击继续观看')) + '</div>'
+                    + '<div class="hist-bar"><i style="width:' + pct + '%"></i></div>'
+                    + '</div>';
+            }).join('');
+            sec.style.display = '';
+            row.querySelectorAll('.hist-card').forEach(card => {
+                card.addEventListener('click', function () {
+                    if (this.dataset.url) location.href = this.dataset.url;
+                });
+                card.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (this.dataset.url) location.href = this.dataset.url;
+                    }
+                });
+            });
         }
 
         document.querySelectorAll('.refresh-btn').forEach(btn => {
@@ -218,6 +389,7 @@
             });
         });
 
+        loadHistory();
         loadRow('movie');
         loadRow('tv');
         loadRow('show');
