@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 import fi.iki.elonen.NanoHTTPD;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 /** 内置本地 HTTP 服务：提供静态资源 + /proxy 代理（替代 server.mjs） */
@@ -105,7 +104,7 @@ public class LocalServer extends NanoHTTPD {
         }
         try {
             Request req = new Request.Builder().url(target).header("User-Agent", UA).build();
-            try (Response resp = client.newCall(req).execute()) {
+            try (okhttp3.Response resp = client.newCall(req).execute()) {
                 ResponseBody body = resp.body();
                 if (body == null) return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "empty");
                 byte[] data = body.bytes();
