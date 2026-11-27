@@ -61,9 +61,9 @@ public class LocalServer extends NanoHTTPD {
     /** 注入密码哈希到 HTML，实现免密打开（与 exe 一致） */
     private Response serveHtml(String uri, Map<String, String> params) throws IOException {
         String file = uri.equals("/") ? "index.html" : uri.substring(1);
-        String html = readAssetAsString(file).replace("{{PASSWORD}}", PASSWORD_HASH);
+        String html = readAssetAsString("public/" + file).replace("{{PASSWORD}}", PASSWORD_HASH);
         String boot = "<script>(function(){var H='" + PASSWORD_HASH + "';try{"
-                + "localStorage.setItem('passwordVerified',JSON.stringify({verified:true,timestamp:Date.now(),passwordHash:H}));"
+                + "localStorage.setItem('passwordVerified_v2',JSON.stringify({verified:true,timestamp:Date.now(),passwordHash:H}));"
                 + "localStorage.setItem('proxyAuthHash',H);}catch(e){}})();</script>";
         int p = html.indexOf("<head");
         if (p >= 0) {
@@ -125,8 +125,9 @@ public class LocalServer extends NanoHTTPD {
         // 去掉查询串
         int q = path.indexOf('?');
         if (q > 0) path = path.substring(0, q);
+        // 网站资产打包在 assets/public/ 子目录下
         try {
-            InputStream in = assets.open(path);
+            InputStream in = assets.open("public/" + path);
             byte[] data = readBytes(in);
             String ct = contentType(path);
             return newFixedLengthResponse(Response.Status.OK, ct, new java.io.ByteArrayInputStream(data), data.length);
