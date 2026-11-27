@@ -21,7 +21,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
 
       - name: 安装依赖
         run: npm ci || npm install
@@ -53,9 +52,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: 安装 Android SDK
-        uses: android-actions/setup-android@v3
 
       - name: 授予 gradlew 执行权限
         run: chmod +x android/gradlew
