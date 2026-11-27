@@ -103,7 +103,15 @@ public class LocalServer extends NanoHTTPD {
             return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain; charset=utf-8", "invalid url");
         }
         try {
-            Request req = new Request.Builder().url(target).header("User-Agent", UA).build();
+            Request.Builder rb = new Request.Builder().url(target).header("User-Agent", UA);
+            // 豆瓣系域名有防盗链，必须携带豆瓣站内 Referer（与 server.mjs 逻辑一致）
+            try {
+                String host = new java.net.URL(target).getHost();
+                if (host.endsWith("doubanio.com") || host.endsWith("douban.com")) {
+                    rb.header("Referer", "https://movie.douban.com/");
+                }
+            } catch (Exception ignore) { }
+            Request req = rb.build();
             try (okhttp3.Response resp = client.newCall(req).execute()) {
                 ResponseBody body = resp.body();
                 if (body == null) return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "empty");
