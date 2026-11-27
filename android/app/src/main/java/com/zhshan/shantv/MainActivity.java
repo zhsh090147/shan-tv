@@ -1,6 +1,10 @@
 package com.zhshan.shantv;
 
 import android.app.Activity;
+import android.app.UiModeManager;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -13,12 +17,24 @@ public class MainActivity extends Activity {
     private WebView webView;
     private LocalServer server;
     private long lastBackPress = 0;
+    private boolean isTv = false;
+
+    private boolean detectTv() {
+        UiModeManager um = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+        if (um != null && um.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            return true;
+        }
+        return getPackageManager().hasSystemFeature("android.software.leanback");
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        isTv = detectTv();
+
         webView = new WebView(this);
         setContentView(webView);
+        webView.setBackgroundColor(Color.BLACK);
 
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
@@ -31,7 +47,32 @@ public class MainActivity extends Activity {
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         s.setUserAgentString(s.getUserAgentString() + " ShanTV/1.0");
 
-        webView.setWebViewClient(new WebViewClient());
+        if (isTv) {
+            // 电视适配：
+            // 电视屏是 1080p 低密度，网页会按桌面宽屏(1920 CSS px)排版，
+            // 导致海报网格巨大、文字(14 CSS px)小到看不清。
+            // 1) 关闭系统字体自动放大，避免布局比例失衡
+            s.setTextZoom(100);
+            s.setSupportZoom(false);
+            s.setBuiltInZoomControls(false);
+            // 2) 每个页面加载完后，把 viewport 强制为 720 CSS px 宽，
+            //    网页按"手机/平板"比例排版，再由 WebView 整体放大约 2.7 倍铺满电视屏，
+            //    文字和图片比例恢复正常（与手机版观感一致）
+            webView.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    view.evaluateJavascript(
+                            "(function(){var v='width=720';"
+                            + "var m=document.querySelector('meta[name=\"viewport\"]');"
+                            + "if(m){m.setAttribute('content',v);}"
+                            + "else{m=document.createElement('meta');"
+                            + "m.setAttribute('name','viewport');m.setAttribute('content',v);"
+                            + "document.head.appendChild(m);}})()", null);
+                }
+            });
+        } else {
+            webView.setWebViewClient(new WebViewClient());
+        }
         webView.setWebChromeClient(new WebChromeClient());
 
         try {
