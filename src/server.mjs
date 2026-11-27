@@ -178,14 +178,20 @@ app.get('/proxy/:encodedUrl', async (req, res) => {
     
     const makeRequest = async () => {
       try {
+        // 请求头：豆瓣系域名有防盗链，必须携带豆瓣站内 Referer
+        const reqHeaders = { 'User-Agent': config.userAgent };
+        try {
+          const targetHost = new URL(targetUrl).hostname;
+          if (targetHost.endsWith('doubanio.com') || targetHost.endsWith('douban.com')) {
+            reqHeaders['Referer'] = 'https://movie.douban.com/';
+          }
+        } catch (e) { /* 忽略 URL 解析错误 */ }
         return await axios({
           method: 'get',
           url: targetUrl,
           responseType: 'stream',
           timeout: config.timeout,
-          headers: {
-            'User-Agent': config.userAgent
-          }
+          headers: reqHeaders
         });
       } catch (error) {
         if (retries < maxRetries) {
