@@ -97,6 +97,10 @@ const API_SITES = {
         api: 'https://api.wujinapi.me',
         name: '无尽资源'
     },
+    liangzi: {
+        api: 'https://cj.lziapi.com',
+        name: '量子资源',
+    },
     wwzy: {
         api: 'https://wwzy.tv',
         name: '旺旺短剧'
