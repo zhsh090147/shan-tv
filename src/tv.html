@@ -1,398 +1,335 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=1280, initial-scale=1.0">
-    <title>山影视TV</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: linear-gradient(180deg, #14141c 0%, #0a0a0f 45%);
-            color: #e5e5e5;
-            font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-            width: 1280px;
-            overflow-x: hidden;
-            min-height: 100vh;
-        }
-        /* ===== 顶栏 ===== */
-        .header {
-            display: flex;
-            align-items: center;
-            padding: 30px 48px 6px;
-        }
-        .logo {
-            font-size: 42px;
-            font-weight: 800;
-            background: linear-gradient(to right, #f472b6, #fb923c);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            flex: 0 0 auto;
-        }
-        .header-btns { margin-left: auto; display: flex; gap: 18px; align-items: center; }
-        .search-pill {
-            display: flex; align-items: center;
-            background: #1c1c26;
-            border: 1px solid #3a3a4a;
-            border-radius: 999px;
-            padding: 14px 34px;
-            font-size: 24px;
-            color: #bbb;
-            cursor: pointer;
-            outline: none;
-        }
-        .search-pill:focus { outline: 4px solid #ff5c8a; outline-offset: 3px; color: #fff; }
-        .hbtn {
-            background: #1c1c24;
-            color: #e5e5e5;
-            border: 1px solid #333;
-            border-radius: 12px;
-            font-size: 21px;
-            padding: 14px 26px;
-            cursor: pointer;
-            outline: none;
-        }
-        .hbtn:focus { outline: 4px solid #ff5c8a; outline-offset: 3px; }
-        /* ===== 今日精选 Hero ===== */
-        .hero {
-            margin: 26px 48px 8px;
-            display: flex;
-            gap: 36px;
-            align-items: center;
-            background: linear-gradient(120deg, rgba(244,114,182,.14), rgba(251,146,60,.08) 55%, transparent);
-            border: 1px solid rgba(244,114,182,.25);
-            border-radius: 20px;
-            padding: 30px 40px;
-            cursor: pointer;
-            outline: none;
-            min-height: 320px;
-        }
-        .hero:focus { outline: 4px solid #ff5c8a; outline-offset: 5px; transform: scale(1.012); }
-        .hero-poster {
-            flex: 0 0 236px;
-            width: 236px; height: 340px;
-            border-radius: 16px;
-            overflow: hidden;
-            background: #1a1a26;
-            box-shadow: 0 14px 40px rgba(0,0,0,.55);
-        }
-        .hero-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .hero-info { flex: 1; }
-        .hero-badge {
-            display: inline-block;
-            background: rgba(244,114,182,.9);
-            color: #fff; font-size: 18px; font-weight: 700;
-            padding: 6px 18px; border-radius: 999px;
-            letter-spacing: 2px;
-        }
-        .hero-title { font-size: 44px; font-weight: 800; color: #fff; margin: 18px 0 10px; }
-        .hero-meta { font-size: 22px; color: #f9a8c4; font-weight: 700; margin-bottom: 14px; }
-        .hero-tip { font-size: 20px; color: #999; }
-        .hero-ok {
-            margin-top: 20px;
-            display: inline-flex; align-items: center; gap: 10px;
-            background: #fff; color: #111;
-            font-size: 22px; font-weight: 700;
-            padding: 12px 30px; border-radius: 12px;
-        }
-        /* ===== 海报行 ===== */
-        .row-section { margin: 20px 48px 0; }
-        .row-head { display: flex; align-items: center; margin-bottom: 14px; }
-        .row-title { font-size: 27px; font-weight: 700; color: #fff; }
-        .row-title::before {
-            content: "";
-            display: inline-block;
-            width: 6px; height: 26px;
-            background: #f472b6;
-            border-radius: 3px;
-            margin-right: 12px;
-            vertical-align: -2px;
-        }
-        .row-sub { font-size: 17px; color: #777; margin-left: 14px; margin-top: 6px; }
-        .refresh-btn {
-            margin-left: auto;
-            background: transparent;
-            border: 1px solid #444;
-            color: #aaa;
-            font-size: 18px;
-            padding: 7px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            outline: none;
-        }
-        .refresh-btn:focus { outline: 3px solid #ff5c8a; outline-offset: 2px; color: #fff; }
-        .row-scroll {
-            display: flex;
-            gap: 18px;
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding: 6px 2px 14px;
-            scroll-behavior: smooth;
-        }
-        .row-scroll::-webkit-scrollbar { display: none; }
-        .card {
-            flex: 0 0 172px;
-            cursor: pointer;
-            outline: none;
-            border-radius: 12px;
-            transition: transform .15s;
-        }
-        .card:focus {
-            outline: 4px solid #ff5c8a;
-            outline-offset: 4px;
-            transform: scale(1.06);
-            background: rgba(255,92,138,.08);
-        }
-        .poster-wrap { position: relative; width: 172px; height: 258px; border-radius: 12px; overflow: hidden; background: #16161f; }
-        .poster-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .rate {
-            position: absolute; top: 8px; left: 8px;
-            background: rgba(244,114,182,.9);
-            color: #fff; font-size: 15px; font-weight: 700;
-            padding: 2px 8px; border-radius: 8px;
-        }
-        .card-title {
-            margin-top: 8px;
-            font-size: 19px; color: #ddd;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            text-align: center;
-        }
-        /* 最近观看：横向文字卡 */
-        .hist-card {
-            flex: 0 0 300px;
-            background: #17171f;
-            border: 1px solid #2c2c38;
-            border-radius: 14px;
-            padding: 20px 22px;
-            cursor: pointer;
-            outline: none;
-        }
-        .hist-card:focus { outline: 4px solid #ff5c8a; outline-offset: 4px; transform: scale(1.04); }
-        .hist-title {
-            font-size: 21px; font-weight: 700; color: #eee;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .hist-sub { font-size: 16px; color: #888; margin-top: 8px; }
-        .hist-bar { height: 5px; background: #2c2c38; border-radius: 3px; margin-top: 14px; overflow: hidden; }
-        .hist-bar i { display: block; height: 100%; background: linear-gradient(to right, #f472b6, #fb923c); }
-        .status { color: #666; font-size: 19px; padding: 30px 0; }
-        /* ===== 底部按键提示 ===== */
-        .keybar {
-            display: flex; justify-content: center; gap: 34px;
-            padding: 26px 0 30px;
-            color: #666; font-size: 17px;
-        }
-        .keybar b {
-            background: #22222c; color: #aaa;
-            border-radius: 8px; padding: 3px 12px;
-            font-weight: 600; margin-right: 8px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>山影视 TV</title>
+<style>
+:root{
+  --bg:#0b0b12; --panel:#171720; --line:#2c2c3a;
+  --text:#f2f2f5; --sub:#a8a8b8; --dim:#6e6e80;
+  --accent:#ff5c8a; --accent2:#fb923c;
+  --poster-w:clamp(150px,12.5vw,240px);
+  --poster-h:calc(var(--poster-w) * 1.5);
+  --pad:clamp(24px,3.2vw,64px);
+  --base:clamp(18px,1.5vw,28px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--text);min-height:100%}
+body{
+  font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:var(--base);
+  padding-bottom:32px;
+  overflow-x:hidden;
+}
+button{font-family:inherit;color:inherit;cursor:pointer}
+
+/* ===== 顶栏 ===== */
+.topbar{
+  display:flex;align-items:center;gap:24px;
+  padding:clamp(18px,2.4vw,40px) var(--pad) clamp(10px,1.2vw,20px);
+}
+.logo{
+  font-size:clamp(30px,2.8vw,52px);font-weight:800;letter-spacing:1px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;
+}
+.top-spacer{flex:1}
+.pill{
+  background:var(--panel);border:2px solid var(--line);border-radius:999px;
+  font-size:clamp(18px,1.35vw,26px);padding:12px 30px;outline:none;white-space:nowrap;
+}
+.pill:focus{border-color:var(--accent);background:#252530;box-shadow:0 0 0 5px rgba(255,92,138,.28)}
+
+/* ===== 今日精选 ===== */
+.hero{
+  margin:clamp(14px,1.8vw,30px) var(--pad);
+  display:flex;gap:clamp(24px,2.4vw,48px);align-items:center;
+  background:linear-gradient(115deg,rgba(255,92,138,.16),rgba(251,146,60,.06) 60%,transparent);
+  border:2px solid rgba(255,92,138,.28);border-radius:22px;
+  padding:clamp(22px,2.2vw,42px);min-height:clamp(220px,24vw,360px);outline:none;
+}
+.hero:focus{border-color:var(--accent);box-shadow:0 0 0 6px rgba(255,92,138,.3);transform:scale(1.005)}
+.hero-poster{
+  flex:0 0 clamp(150px,14vw,250px);width:clamp(150px,14vw,250px);
+  height:clamp(210px,20vw,340px);border-radius:14px;overflow:hidden;background:#1b1b26;
+  box-shadow:0 12px 36px rgba(0,0,0,.5);
+}
+.hero-poster img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-info{flex:1;min-width:0}
+.badge{
+  display:inline-block;background:var(--accent);color:#fff;font-weight:700;
+  font-size:clamp(15px,1.1vw,22px);padding:6px 20px;border-radius:999px;letter-spacing:2px;
+}
+.hero-title{font-size:clamp(30px,3vw,56px);font-weight:800;margin:16px 0 12px;line-height:1.15}
+.hero-meta{font-size:clamp(19px,1.5vw,28px);color:#ffb3cd;font-weight:700;margin-bottom:12px}
+.hero-note{font-size:clamp(16px,1.2vw,22px);color:var(--sub)}
+.hero-ok{
+  display:inline-flex;align-items:center;gap:10px;margin-top:20px;
+  background:#fff;color:#111;font-weight:700;font-size:clamp(17px,1.25vw,24px);
+  padding:12px 28px;border-radius:12px;
+}
+
+/* ===== 海报行 ===== */
+.section{margin:clamp(16px,2vw,32px) var(--pad) 0}
+.section-head{display:flex;align-items:center;gap:18px;margin-bottom:14px}
+.section-title{
+  font-size:clamp(24px,2vw,36px);font-weight:700;
+  display:flex;align-items:center;gap:14px;
+}
+.section-title::before{content:"";width:8px;height:1em;background:var(--accent);border-radius:4px}
+.section-sub{font-size:clamp(15px,1.1vw,21px);color:var(--dim)}
+.refresh{
+  margin-left:auto;background:transparent;border:2px solid var(--line);border-radius:12px;
+  font-size:clamp(15px,1.1vw,21px);padding:8px 22px;color:var(--sub);outline:none;
+}
+.refresh:focus{border-color:var(--accent);color:#fff;box-shadow:0 0 0 4px rgba(255,92,138,.25)}
+.row{display:flex;gap:clamp(14px,1.4vw,26px);overflow-x:auto;overflow-y:hidden;padding:8px 4px 18px;scrollbar-width:none}
+.row::-webkit-scrollbar{display:none}
+.card{flex:0 0 var(--poster-w);outline:none;border-radius:12px;cursor:pointer}
+.card:focus{box-shadow:0 0 0 6px var(--accent);transform:scale(1.05)}
+.poster{
+  position:relative;width:var(--poster-w);height:var(--poster-h);
+  border-radius:12px;overflow:hidden;background:#181822;
+}
+.poster img{width:100%;height:100%;object-fit:cover;display:block}
+.rate{
+  position:absolute;top:8px;left:8px;background:var(--accent);color:#fff;
+  font-size:clamp(14px,1vw,19px);font-weight:700;padding:2px 10px;border-radius:8px;
+}
+.card-title{
+  margin-top:10px;font-size:clamp(19px,1.45vw,27px);color:#e6e6ec;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
+}
+.card:focus .card-title{color:#fff;font-weight:700}
+.status{color:var(--dim);font-size:clamp(18px,1.3vw,24px);padding:26px 0}
+
+/* ===== 最近观看 ===== */
+.hcard{
+  flex:0 0 clamp(260px,22vw,400px);background:var(--panel);
+  border:2px solid var(--line);border-radius:14px;padding:20px 24px;outline:none;cursor:pointer;
+}
+.hcard:focus{border-color:var(--accent);box-shadow:0 0 0 5px rgba(255,92,138,.28);transform:scale(1.03)}
+.hcard-title{font-size:clamp(20px,1.5vw,28px);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hcard-sub{font-size:clamp(15px,1.1vw,21px);color:var(--sub);margin-top:10px}
+.bar{height:6px;background:#2e2e3c;border-radius:3px;margin-top:16px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+/* ===== 搜索浮层（TV 大字版） ===== */
+.mask{
+  position:fixed;inset:0;background:rgba(6,6,12,.96);display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:28px;z-index:50;
+}
+.mask.show{display:flex}
+.search-title{font-size:clamp(30px,3vw,56px);font-weight:800}
+.search-box{display:flex;gap:16px;width:min(1100px,90vw)}
+.search-box input{
+  flex:1;background:#1a1a24;border:2px solid var(--line);border-radius:16px;
+  padding:18px 28px;font-size:clamp(22px,1.8vw,34px);color:#fff;outline:none;
+}
+.search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 5px rgba(255,92,138,.25)}
+.search-box button{
+  background:var(--accent);border:none;border-radius:16px;color:#fff;font-weight:700;
+  font-size:clamp(22px,1.8vw,34px);padding:0 44px;outline:none;
+}
+.search-box button:focus{box-shadow:0 0 0 6px rgba(255,92,138,.4)}
+.keys{color:var(--dim);font-size:clamp(16px,1.2vw,22px)}
+.hot-tags{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:min(1100px,90vw)}
+.tag{
+  background:#1c1c26;border:2px solid var(--line);border-radius:999px;
+  padding:10px 26px;font-size:clamp(18px,1.35vw,26px);outline:none;
+}
+.tag:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(255,92,138,.25)}
+
+.keybar{
+  display:flex;justify-content:center;flex-wrap:wrap;gap:clamp(18px,2vw,38px);
+  color:var(--dim);font-size:clamp(15px,1.1vw,21px);padding:30px var(--pad) 10px;
+}
+.keybar b{background:#22222e;border-radius:8px;padding:4px 14px;color:var(--sub);margin-right:8px}
+</style>
 </head>
 <body>
-    <div class="header">
-        <div class="logo">山影视TV</div>
-        <div class="header-btns">
-            <div class="search-pill" tabindex="0" onclick="location.href='index.html'">🔍 想看什么，搜一下</div>
-            <button class="hbtn" tabindex="0" onclick="location.href='index.html'">网页版首页</button>
-        </div>
-    </div>
 
-    <div class="hero" id="hero" tabindex="0" style="display:none">
-        <div class="hero-poster"><img id="hero-img" alt="今日精选"></div>
-        <div class="hero-info">
-            <span class="hero-badge">今日精选</span>
-            <div class="hero-title" id="hero-title"></div>
-            <div class="hero-meta" id="hero-meta"></div>
-            <div class="hero-tip">从热门片单里挑一部今晚的</div>
-            <div class="hero-ok">⏎ 按 OK 键立即观看</div>
-        </div>
-    </div>
+<div class="topbar">
+  <div class="logo">山影视 TV</div>
+  <div class="top-spacer"></div>
+  <button class="pill" id="btn-search" tabindex="0">🔍 搜索影片</button>
+  <button class="pill" id="btn-mode" tabindex="0">切到手机版</button>
+</div>
 
-    <div class="row-section" id="sec-history" style="display:none">
-        <div class="row-head">
-            <div class="row-title">最近观看</div>
-            <div class="row-sub">接着上次的进度看</div>
-        </div>
-        <div class="row-scroll" id="row-history"></div>
-    </div>
+<div class="hero" id="hero" tabindex="0" style="display:none">
+  <div class="hero-poster"><img id="hero-img" alt="今日精选"></div>
+  <div class="hero-info">
+    <span class="badge">今日精选</span>
+    <div class="hero-title" id="hero-title"></div>
+    <div class="hero-meta" id="hero-meta"></div>
+    <div class="hero-note">按 OK 键直接搜索这部片子</div>
+    <div class="hero-ok">⏎ OK 键观看</div>
+  </div>
+</div>
 
-    <div class="row-section">
-        <div class="row-head">
-            <div class="row-title">发现电影</div>
-            <button class="refresh-btn" tabindex="0" data-type="movie">换一批</button>
-        </div>
-        <div class="row-scroll" id="row-movie"><div class="status">正在加载热门电影…</div></div>
-    </div>
+<div class="section" id="sec-history" style="display:none">
+  <div class="section-head"><div class="section-title">最近观看</div><div class="section-sub">接着上次的进度</div></div>
+  <div class="row" id="row-history"></div>
+</div>
 
-    <div class="row-section">
-        <div class="row-head">
-            <div class="row-title">发现剧集</div>
-            <button class="refresh-btn" tabindex="0" data-type="tv">换一批</button>
-        </div>
-        <div class="row-scroll" id="row-tv"><div class="status">正在加载热门电视剧…</div></div>
-    </div>
+<div class="section">
+  <div class="section-head">
+    <div class="section-title">热门电影</div>
+    <button class="refresh" data-type="movie" tabindex="0">换一批 ⟳</button>
+  </div>
+  <div class="row" id="row-movie"><div class="status">正在加载热门电影…</div></div>
+</div>
 
-    <div class="row-section">
-        <div class="row-head">
-            <div class="row-title">发现综艺</div>
-            <button class="refresh-btn" tabindex="0" data-type="show">换一批</button>
-        </div>
-        <div class="row-scroll" id="row-show"><div class="status">正在加载热门综艺…</div></div>
-    </div>
+<div class="section">
+  <div class="section-head">
+    <div class="section-title">热门剧集</div>
+    <button class="refresh" data-type="tv" tabindex="0">换一批 ⟳</button>
+  </div>
+  <div class="row" id="row-tv"><div class="status">正在加载热门剧集…</div></div>
+</div>
 
-    <div class="keybar">
-        <span><b>↑↓←→</b>移动焦点</span>
-        <span><b>OK</b>确认观看</span>
-        <span><b>返回</b>退出应用</span>
-    </div>
+<div class="section">
+  <div class="section-head">
+    <div class="section-title">热门综艺</div>
+    <button class="refresh" data-type="show" tabindex="0">换一批 ⟳</button>
+  </div>
+  <div class="row" id="row-show"><div class="status">正在加载热门综艺…</div></div>
+</div>
 
-    <script src="js/config.js"></script>
-    <script src="js/proxy-auth.js"></script>
-    <script>
-        const TAGS = { movie: '热门', tv: '热门', show: '综艺' };
-        const pageStart = { movie: 0, tv: 0, show: 0 };
-        const PAGE_SIZE = 20;
+<div class="keybar">
+  <span><b>↑ ↓ ← →</b>移动焦点</span><span><b>OK</b>确认</span>
+  <span><b>返回键</b>返回/退出</span>
+</div>
 
-        function escapeHtml(s) {
-            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        }
+<!-- TV 搜索浮层 -->
+<div class="mask" id="searchMask">
+  <div class="search-title">搜索影片</div>
+  <div class="search-box">
+    <input id="tvSearchInput" type="text" placeholder="用遥控器输入片名，或选下面的热门词" autocomplete="off">
+    <button id="btn-go" tabindex="0">搜索</button>
+  </div>
+  <div class="hot-tags" id="hotTags"></div>
+  <button class="pill" id="btn-close-search" tabindex="0">关闭</button>
+  <div class="keys">提示：也可用手机扫码/鼠标键盘输入，按 OK 搜索</div>
+</div>
 
-        async function proxyFetch(targetUrl) {
-            let url = PROXY_URL + encodeURIComponent(targetUrl);
-            if (window.addAuthToProxyUrl) url = await addAuthToProxyUrl(url);
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            return resp.json();
-        }
+<script src="js/config.js"></script>
+<script src="js/proxy-auth.js"></script>
+<script>
+const TAGS = {movie:'热门', tv:'热门', show:'综艺'};
+const pageStart = {movie:0, tv:0, show:0};
+const PAGE_SIZE = 18;
+const HOT_WORDS = ['我的有罪之人','庆余年','甄嬛传','狂飙','三体','漫长的季节','繁花','狐妖小红娘'];
 
-        function gotoSearch(title) {
-            location.href = 'index.html?s=' + encodeURIComponent(title);
-        }
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function proxyUrl(u){
+  let p = PROXY_URL + encodeURIComponent(u);
+  return window.addAuthToProxyUrl ? Promise.resolve(addAuthToProxyUrl(p)) : Promise.resolve(p);
+}
+async function proxyFetch(target){
+  const u = await proxyUrl(target);
+  const r = await fetch(u);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+function goSearch(title){
+  location.href = 'index.html?s=' + encodeURIComponent(title);
+}
+function bindFocus(container){
+  container.querySelectorAll('[data-title]').forEach(el=>{
+    el.addEventListener('click',()=>goSearch(el.dataset.title));
+  });
+}
+function renderRow(id, subjects){
+  const box = document.getElementById(id);
+  box.innerHTML = subjects.map(it=>{
+    const rate = (it.rate && parseFloat(it.rate)>0)
+      ? '<span class="rate">'+esc(it.rate)+'</span>' : '';
+    const img = it.cover ? '<img loading="lazy" src="'+esc(it.cover)+'" alt="'+esc(it.title)+'">' : '';
+    return '<div class="card" tabindex="0" data-title="'+esc(it.title)+'">'
+      + '<div class="poster">'+img+rate+'</div>'
+      + '<div class="card-title">'+esc(it.title)+'</div></div>';
+  }).join('');
+  bindFocus(box);
+}
+async function loadRow(type){
+  const box = document.getElementById('row-'+type);
+  const api = 'https://movie.douban.com/j/search_subjects?type='
+    + (type==='show'?'tv':type) + '&tag=' + encodeURIComponent(TAGS[type])
+    + '&sort=recommend&page_limit=' + PAGE_SIZE + '&page_start=' + pageStart[type];
+  try{
+    const data = await proxyFetch(api);
+    const subjects = (data&&data.subjects)||[];
+    await Promise.all(subjects.map(async it=>{
+      if(it.cover){ try{ it.cover = await proxyUrl(it.cover); }catch(e){} }
+    }));
+    if(!subjects.length){ box.innerHTML='<div class="status">暂无数据，可按 OK 重试换一批</div>'; return; }
+    renderRow('row-'+type, subjects);
+    if(type==='movie') buildHero(subjects);
+  }catch(e){
+    box.innerHTML = '<div class="status">加载失败：'+esc(e.message)+'，按 OK 重试「换一批」</div>';
+  }
+}
+function buildHero(list){
+  const pool = list.filter(x=>parseFloat(x.rate)>=7.5);
+  const pick = (pool.length?pool:list)[0];
+  if(!pick) return;
+  const hero = document.getElementById('hero');
+  document.getElementById('hero-img').src = pick.cover||'';
+  document.getElementById('hero-title').textContent = pick.title||'';
+  document.getElementById('hero-meta').textContent = pick.rate ? ('豆瓣评分 '+pick.rate) : '';
+  hero.dataset.title = pick.title||'';
+  hero.onclick = ()=>goSearch(hero.dataset.title);
+  hero.style.display='flex';
+}
+function loadHistory(){
+  let h=[]; try{ h=JSON.parse(localStorage.getItem('viewingHistory')||'[]'); }catch(e){}
+  h=(h||[]).slice(0,8); if(!h.length) return;
+  const box=document.getElementById('row-history');
+  box.innerHTML = h.map(x=>{
+    const pct=(x.duration&&x.playbackPosition)?Math.min(100,Math.round(x.playbackPosition/x.duration*100)):0;
+    return '<div class="hcard" tabindex="0" data-url="'+esc(x.url)+'">'
+      + '<div class="hcard-title">'+esc(x.title||'未知影片')+'</div>'
+      + '<div class="hcard-sub">'+(pct?('已看 '+pct+'%，接着看'):(x.sourceName?('来自 '+esc(x.sourceName)):'点击继续观看'))+'</div>'
+      + '<div class="bar"><i style="width:'+pct+'%"></i></div></div>';
+  }).join('');
+  box.querySelectorAll('[data-url]').forEach(el=>{
+    el.addEventListener('click',()=>{ if(el.dataset.url) location.href=el.dataset.url; });
+  });
+  document.getElementById('sec-history').style.display='';
+}
+function openSearch(){
+  document.getElementById('searchMask').classList.add('show');
+  setTimeout(()=>document.getElementById('tvSearchInput').focus(),80);
+}
+function closeSearch(){ document.getElementById('searchMask').classList.remove('show'); }
+function submitSearch(){
+  const q=document.getElementById('tvSearchInput').value.trim();
+  if(q) goSearch(q);
+}
 
-        /* ===== 海报行 ===== */
-        function renderRow(container, subjects) {
-            container.innerHTML = subjects.map(item => {
-                const rate = item.rate && parseFloat(item.rate) > 0
-                    ? '<span class="rate">' + escapeHtml(item.rate) + '</span>' : '';
-                const img = item.cover
-                    ? '<img loading="lazy" alt="' + escapeHtml(item.title) + '" src="' + escapeHtml(item.cover)
-                      + '" onerror="this.onerror=null;this.src=this.src.replace(\'https://libretv-74y.pages.dev/proxy/\',\'/proxy/\');">'
-                    : '';
-                return '<div class="card" tabindex="0" data-title="' + escapeHtml(item.title) + '" data-clickable="1">'
-                    + '<div class="poster-wrap">' + img + rate + '</div>'
-                    + '<div class="card-title">' + escapeHtml(item.title) + '</div>'
-                    + '</div>';
-            }).join('');
-        }
+document.getElementById('btn-search').onclick=openSearch;
+document.getElementById('btn-close-search').onclick=closeSearch;
+document.getElementById('btn-go').onclick=submitSearch;
+document.getElementById('tvSearchInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();submitSearch();} });
+document.getElementById('hotTags').innerHTML = HOT_WORDS.map(w=>'<button class="tag" tabindex="0">'+esc(w)+'</button>').join('');
+document.querySelectorAll('#hotTags .tag').forEach(t=>t.onclick=()=>goSearch(t.textContent));
+document.getElementById('btn-mode').onclick=function(){
+  if(window.ShanTV && ShanTV.switchMode){ ShanTV.switchMode('phone'); }
+  else { location.href='index.html'; }
+};
+document.querySelectorAll('.refresh').forEach(btn=>{
+  btn.onclick=function(){ pageStart[this.dataset.type]+=PAGE_SIZE; loadRow(this.dataset.type); };
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeSearch();
+});
 
-        function bindCardClicks(container) {
-            container.querySelectorAll('.card').forEach(card => {
-                card.addEventListener('click', function () { gotoSearch(this.dataset.title); });
-                card.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        gotoSearch(this.dataset.title);
-                    }
-                });
-            });
-        }
-
-        async function loadRow(type) {
-            const container = document.getElementById('row-' + type);
-            container.innerHTML = '<div class="status">正在加载…</div>';
-            const api = 'https://movie.douban.com/j/search_subjects?type='
-                + (type === 'show' ? 'tv' : type)
-                + '&tag=' + encodeURIComponent(TAGS[type])
-                + '&sort=recommend&page_limit=' + PAGE_SIZE
-                + '&page_start=' + pageStart[type];
-            try {
-                const data = await proxyFetch(api);
-                const subjects = (data && data.subjects) || [];
-                // 封面必须走代理（豆瓣有防盗链，直连会 418 黑图）
-                await Promise.all(subjects.map(async item => {
-                    if (item.cover) {
-                        try {
-                            item.cover = await addAuthToProxyUrl(PROXY_URL + encodeURIComponent(item.cover));
-                        } catch (e) { /* 保留原地址兜底 */ }
-                    }
-                }));
-                if (!subjects.length) { container.innerHTML = '<div class="status">暂无数据</div>'; return; }
-                renderRow(container, subjects);
-                bindCardClicks(container);
-                if (type === 'movie') buildHero(subjects);
-            } catch (err) {
-                container.innerHTML = '<div class="status">加载失败：' + escapeHtml(err.message) + '，可按 OK 键重试「换一批」</div>';
-            }
-        }
-
-        /* ===== 今日精选 Hero（从热门电影里随机挑一部高分片） ===== */
-        function buildHero(subjects) {
-            const pool = subjects.filter(s => parseFloat(s.rate) >= 7.5);
-            const pick = (pool.length ? pool : subjects)[Math.floor(Math.random() * (pool.length || subjects.length))];
-            if (!pick) return;
-            const hero = document.getElementById('hero');
-            document.getElementById('hero-img').src = pick.cover || '';
-            document.getElementById('hero-img').onerror = function () {
-                this.onerror = null;
-                this.src = (this.src || '').replace('https://libretv-74y.pages.dev/proxy/', '/proxy/');
-            };
-            document.getElementById('hero-title').textContent = pick.title || '';
-            document.getElementById('hero-meta').textContent = pick.rate ? '豆瓣评分 ' + pick.rate : '';
-            hero.style.display = 'flex';
-            hero.dataset.title = pick.title || '';
-            hero.onclick = function () { gotoSearch(this.dataset.title); };
-            hero.onkeydown = function (e) {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); gotoSearch(this.dataset.title); }
-            };
-        }
-
-        /* ===== 最近观看 ===== */
-        function loadHistory() {
-            let history = [];
-            try { history = JSON.parse(localStorage.getItem('viewingHistory') || '[]'); } catch (e) {}
-            history = (history || []).slice(0, 10);
-            if (!history.length) return;
-            const row = document.getElementById('row-history');
-            const sec = document.getElementById('sec-history');
-            row.innerHTML = history.map(h => {
-                const pct = (h.duration && h.playbackPosition)
-                    ? Math.min(100, Math.round(h.playbackPosition / h.duration * 100)) : 0;
-                return '<div class="hist-card" tabindex="0" data-url="' + escapeHtml(h.url) + '">'
-                    + '<div class="hist-title">' + escapeHtml(h.title || '未知影片') + '</div>'
-                    + '<div class="hist-sub">' + (pct ? '已看 ' + pct + '% · 接着看' : (h.sourceName ? '来自 ' + escapeHtml(h.sourceName) : '点击继续观看')) + '</div>'
-                    + '<div class="hist-bar"><i style="width:' + pct + '%"></i></div>'
-                    + '</div>';
-            }).join('');
-            sec.style.display = '';
-            row.querySelectorAll('.hist-card').forEach(card => {
-                card.addEventListener('click', function () {
-                    if (this.dataset.url) location.href = this.dataset.url;
-                });
-                card.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        if (this.dataset.url) location.href = this.dataset.url;
-                    }
-                });
-            });
-        }
-
-        document.querySelectorAll('.refresh-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const type = this.dataset.type;
-                pageStart[type] += PAGE_SIZE;
-                loadRow(type);
-            });
-            btn.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
-            });
-        });
-
-        loadHistory();
-        loadRow('movie');
-        loadRow('tv');
-        loadRow('show');
-    </script>
+loadHistory();
+loadRow('movie');
+loadRow('tv');
+loadRow('show');
+</script>
 </body>
 </html>
