@@ -2,10 +2,9 @@ package com.zhshan.shantv;
 
 import android.app.Activity;
 import android.app.UiModeManager;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -14,29 +13,31 @@ import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 import android.widget.Toast;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
+/** 山影视主界面：内置本地服务器 + WebView；电视自动进入 TV 桌面 */
 public class MainActivity extends Activity {
+
+    private static final String BASE = "http://127.0.0.1:17891";
+    private static final String PREFS = "shan_tv_prefs";
+    private static final String KEY_FORCE_MODE = "force_mode"; // tv / phone / (空)=自动
 
     private WebView webView;
     private LocalServer server;
-    private long lastBackPress = 0;
     private boolean isTv = false;
-
-    private boolean detectTv() {
-        UiModeManager um = (UiModeManager) getSystemService(UI_MODE_SERVICE);
-        if (um != null && um.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
-            return true;
-        }
-        return getPackageManager().hasSystemFeature("android.software.leanback");
-    }
+    private long lastBackPress = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        isTv = detectTv();
+
+        isTv = "tv".equals(getForceMode()) || (!"phone".equals(getForceMode()) && detectTv());
 
         webView = new WebView(this);
         setContentView(webView);
-        webView.setBackgroundColor(Color.BLACK);
+        webView.setBackgroundColor(0xFF08080E);
 
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
@@ -52,76 +53,40 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                // TV 模式：把 config.js 里的代理地址改写为 Cloudflare Pages 代理
-                // （带 KV 缓存、机房网络，与网页版同一条加速链路，实测鉴权兼容），
-                // 并附加 fetch 兜底：Cloudflare 不可达时自动回退本地代理 /proxy/
-                if (isTv && request != null
-                        && "GET".equals(request.getMethod())
-                        && request.getUrl() != null
+                // 电视端把 config.js 的代理切到 Cloudflare 线上地址，并注入自动回退逻辑
+                if (isTv && request.getMethod().equals("GET") && request.getUrl() != null
                         && request.getUrl().getPath() != null
                         && request.getUrl().getPath().endsWith("/js/config.js")) {
                     try {
-                        java.io.InputStream in = getAssets().open("public/js/config.js");
-                        byte[] raw = readAll(in);
+                        InputStream in = getAssets().open("public/js/config.js");
+                        String js = new String(readAll(in), StandardCharsets.UTF_8);
                         in.close();
-                        String src = new String(raw, java.nio.charset.StandardCharsets.UTF_8);
-                        String patch = "const PROXY_URL='https://libretv-74y.pages.dev/proxy/';"
-                                + "window.__CF_PROXY_FALLBACK='/proxy/';\n"
-                                + ";(function(){try{"
-                                + "var FB=window.__CF_PROXY_FALLBACK;"
-                                + "var CF='https://libretv-74y.pages.dev/proxy/';"
-                                + "var of=window.fetch.bind(window);"
+                        String inject = "const PROXY_URL='https://libretv-74y.pages.dev/proxy/';"
+                                + "window.__CF_PROXY_FALLBACK='/proxy/';"
+                                + ";(function(){try{var FB=window.__CF_PROXY_FALLBACK;"
+                                + "var CF='https://libretv-74y.pages.dev/proxy/';var of=window.fetch.bind(window);"
                                 + "function toLocal(u){return FB+u.slice(CF.length);}"
-                                + "window.fetch=function(input,init){"
-                                + "try{var u=(typeof input==='string')?input:((input&&input.url)||'');"
-                                + "if(u.indexOf(CF)===0){"
-                                + "return of(u,init).then(function(r){"
-                                + "if(r.ok)return r;"
-                                + "return of(toLocal(u),init).then(function(r2){return r2.ok?r2:r;}).catch(function(){return r;});"
-                                + "},function(e){return of(toLocal(u),init);});}"
-                                + "return of(input,init);"
-                                + "}catch(e){return of(input,init);}};"
-                                + "}catch(e){}})();\n";
-                        String out = src.replace("const PROXY_URL = '/proxy/';", patch);
-                        byte[] data = out.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                                + "window.fetch=function(input,init){try{"
+                                + "var u=(typeof input==='string')?input:((input&&input.url)||'');"
+                                + "if(u.indexOf(CF)===0){return of(u,init).then(function(r){if(r.ok)return r;"
+                                + "return of(toLocal(u),init).then(function(r2){return r2.ok?r2:r;})"
+                                + ".catch(function(){return r;});},function(e){return of(toLocal(u),init);});}"
+                                + "return of(input,init);}catch(e){return of(input,init);}};}catch(e){}})();";
+                        js = js.replace("const PROXY_URL = '/proxy/';", inject);
                         return new WebResourceResponse("application/javascript", "utf-8",
-                                new java.io.ByteArrayInputStream(data));
-                    } catch (Exception e) {
-                        // 改写失败则按原样加载
-                    }
+                                new ByteArrayInputStream(js.getBytes(StandardCharsets.UTF_8)));
+                    } catch (Exception ignore) { }
                 }
-                return null;
-            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                if (!isTv) return;
-                if (url != null && url.contains("tv.html")) {
-                    // TV 专用首页：自带 1280 宽的电视版式，无需注入
-                    return;
-                }
-                // 其余页面(搜索/播放/观看)：固定 1280 布局宽 + 整体放大 1.5 倍，
-                // 修复电视上文字过小/海报比例失衡，同时保持横屏信息量
-                String js = "(function(){"
-                        + "var m=document.querySelector('meta[name=\"viewport\"]');"
-                        + "if(m){m.setAttribute('content','width=1280');}"
-                        + "var st=document.getElementById('shan-tv-style');"
-                        + "if(!st){st=document.createElement('style');st.id='shan-tv-style';"
-                        + "st.textContent='body{zoom:1.5}"
-                        + "*:focus{outline:4px solid #ff5c8a!important;outline-offset:3px;border-radius:8px}"
-                        + "';document.head.appendChild(st);}"
-                        + "})()";
-                view.evaluateJavascript(js, null);
+                return super.shouldInterceptRequest(view, request);
             }
         });
         webView.setWebChromeClient(new WebChromeClient());
-
-        if (isTv) {
-            // 关闭系统字体自动缩放，避免破坏布局比例
-            s.setTextZoom(100);
-            s.setSupportZoom(false);
-            s.setBuiltInZoomControls(false);
-        }
+        webView.addJavascriptInterface(new Object() {
+            @android.webkit.JavascriptInterface
+            public void switchMode(String mode) {
+                runOnUiThread(() -> MainActivity.this.switchMode(mode));
+            }
+        }, "ShanTV");
 
         try {
             server = new LocalServer(this);
@@ -129,16 +94,40 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        // 电视从专用 TV 首页启动；手机保持原首页
-        webView.loadUrl(isTv ? "http://127.0.0.1:17891/tv.html" : "http://127.0.0.1:17891/");
+        webView.loadUrl(isTv ? BASE + "/tv.html" : BASE + "/");
     }
 
-    private byte[] readAll(java.io.InputStream in) throws java.io.IOException {
-        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-        byte[] buf = new byte[8192];
-        int n;
-        while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
-        return out.toByteArray();
+    /** 手动切换显示模式，供 TV 首页按钮调用 */
+    public void switchMode(final String mode) {
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_FORCE_MODE, mode).apply();
+        Toast.makeText(this, "已切换" + ("tv".equals(mode) ? "电视版" : "手机版") + "，正在重启…", Toast.LENGTH_SHORT).show();
+        webView.postDelayed(new Runnable() {
+            @Override public void run() { recreate(); }
+        }, 500);
+    }
+
+    private String getForceMode() {
+        return getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_FORCE_MODE, "");
+    }
+
+    /** 多重判断：系统电视模式 / leanback 特性 / 大屏高分辨率 */
+    private boolean detectTv() {
+        try {
+            UiModeManager um = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+            if (um != null && um.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) return true;
+        } catch (Exception ignore) { }
+        try {
+            if (getPackageManager().hasSystemFeature("android.software.leanback")) return true;
+        } catch (Exception ignore) { }
+        try {
+            DisplayMetrics m = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(m);
+            float widthDp = m.widthPixels / m.density;
+            float heightDp = m.heightPixels / m.density;
+            // 电视/盒子的逻辑屏幕通常 >= 960dp 宽
+            if (widthDp >= 960 && heightDp >= 540) return true;
+        } catch (Exception ignore) { }
+        return false;
     }
 
     @Override
@@ -147,27 +136,33 @@ public class MainActivity extends Activity {
             webView.goBack();
             return;
         }
-        // 没有历史记录时：若正处于搜索结果页，先返回首页；再按一次才退出
         final long now = System.currentTimeMillis();
         webView.evaluateJavascript(
                 "(function(){var r=document.getElementById('resultsArea');" +
                 "return (r && !r.classList.contains('hidden')) ? '1' : '0';})()",
                 value -> {
                     boolean showingResults = value != null && value.contains("1");
-                    boolean withinDoublePress = now - lastBackPress < 2500;
-                    if (showingResults && !withinDoublePress) {
+                    boolean within = now - lastBackPress < 2500;
+                    if (showingResults && !within) {
                         lastBackPress = now;
                         webView.evaluateJavascript(
-                                "if(typeof resetToHome==='function'){resetToHome();}else{window.location.href='/';}",
-                                null);
+                                "if(typeof resetToHome==='function'){resetToHome();}else{window.location.href='/';}", null);
                         Toast.makeText(MainActivity.this, "已返回首页，再按一次退出", Toast.LENGTH_SHORT).show();
-                    } else if (!withinDoublePress) {
+                    } else if (!within) {
                         lastBackPress = now;
                         Toast.makeText(MainActivity.this, "再按一次退出山影视", Toast.LENGTH_SHORT).show();
                     } else {
                         super.onBackPressed();
                     }
                 });
+    }
+
+    private static byte[] readAll(InputStream in) throws Exception {
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+        return out.toByteArray();
     }
 
     @Override
