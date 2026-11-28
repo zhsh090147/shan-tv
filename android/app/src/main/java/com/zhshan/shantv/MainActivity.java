@@ -5,17 +5,12 @@ import android.app.UiModeManager;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 import android.widget.Toast;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 /** 山影视主界面：内置本地服务器 + WebView；电视自动进入 TV 桌面 */
 public class MainActivity extends Activity {
@@ -50,36 +45,10 @@ public class MainActivity extends Activity {
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         s.setUserAgentString(s.getUserAgentString() + " ShanTV/1.0");
 
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                // 电视端把 config.js 的代理切到 Cloudflare 线上地址，并注入自动回退逻辑
-                if (isTv && request.getMethod().equals("GET") && request.getUrl() != null
-                        && request.getUrl().getPath() != null
-                        && request.getUrl().getPath().endsWith("/js/config.js")) {
-                    try {
-                        InputStream in = getAssets().open("public/js/config.js");
-                        String js = new String(readAll(in), StandardCharsets.UTF_8);
-                        in.close();
-                        String inject = "const PROXY_URL='https://libretv-74y.pages.dev/proxy/';"
-                                + "window.__CF_PROXY_FALLBACK='/proxy/';"
-                                + ";(function(){try{var FB=window.__CF_PROXY_FALLBACK;"
-                                + "var CF='https://libretv-74y.pages.dev/proxy/';var of=window.fetch.bind(window);"
-                                + "function toLocal(u){return FB+u.slice(CF.length);}"
-                                + "window.fetch=function(input,init){try{"
-                                + "var u=(typeof input==='string')?input:((input&&input.url)||'');"
-                                + "if(u.indexOf(CF)===0){return of(u,init).then(function(r){if(r.ok)return r;"
-                                + "return of(toLocal(u),init).then(function(r2){return r2.ok?r2:r;})"
-                                + ".catch(function(){return r;});},function(e){return of(toLocal(u),init);});}"
-                                + "return of(input,init);}catch(e){return of(input,init);}};}catch(e){}})();";
-                        js = js.replace("const PROXY_URL = '/proxy/';", inject);
-                        return new WebResourceResponse("application/javascript", "utf-8",
-                                new ByteArrayInputStream(js.getBytes(StandardCharsets.UTF_8)));
-                    } catch (Exception ignore) { }
-                }
-                return super.shouldInterceptRequest(view, request);
-            }
-        });
+        // 纯 TV 版：所有请求走内置本地代理（tv.html 已注入免密 auth），
+        // 不再劫持 config.js 切到 Cloudflare —— 老电视 WebView 对跨域 CF 代理兼容性差，
+        // 本地 /proxy/ 更稳定，且豆瓣图片已带 Referer。
+        webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
         webView.addJavascriptInterface(new Object() {
             @android.webkit.JavascriptInterface
@@ -155,14 +124,6 @@ public class MainActivity extends Activity {
                         super.onBackPressed();
                     }
                 });
-    }
-
-    private static byte[] readAll(InputStream in) throws Exception {
-        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-        byte[] buf = new byte[8192];
-        int n;
-        while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
-        return out.toByteArray();
     }
 
     @Override
