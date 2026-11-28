@@ -8,14 +8,15 @@ android {
         applicationId "com.zhshan.shantv"
         minSdk 21
         targetSdk 35
-        versionCode 1
-        versionName "1.0"
+        versionCode 22
+        versionName "1.0.22"
     }
     signingConfigs {
         release {
-            def ks = rootProject.file('app/release.keystore')
+            def ks = rootProject.file('app/shantv-fixed.keystore')
             if (ks.exists()) {
                 storeFile ks
+                storeType 'PKCS12'
                 storePassword 'shantv2026'
                 keyAlias 'shantv'
                 keyPassword 'shantv2026'
@@ -25,7 +26,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            if (rootProject.file('app/release.keystore').exists()) {
+            if (rootProject.file('app/shantv-fixed.keystore').exists()) {
                 signingConfig signingConfigs.release
             }
         }
