@@ -220,9 +220,24 @@ async function proxyFetchJSON(target, timeout){
     return await r.json();
   } finally { clearTimeout(tid); }
 }
-// 图片也走代理（豆瓣防盗链）
+// 图片也走代理（豆瓣防盗链）—— 本地优先，失败自动切 CF
+var CF_PROXY = 'https://libretv-74y.pages.dev/proxy/';
 async function proxyImg(target){
-  return await proxyUrl(target);
+  var localU = await proxyUrl(target);                 // /proxy/<encoded>?auth=xxx
+  var cfU = CF_PROXY + encodeURIComponent(target);     // CF 备用（云端函数自带豆瓣 Referer）
+  return {local: localU, cf: cfU};
+}
+// 给 img 设置代理图片，加载失败时自动切 CF 重试一次
+async function setProxyImage(img, target){
+  if(!target){ return; }
+  try{
+    var urls = await proxyImg(target);
+    img.onerror = function(){
+      img.onerror = null;
+      if(img.src !== urls.cf){ img.src = urls.cf; }   // 切 CF 重试
+    };
+    img.src = urls.local;
+  }catch(e){}
 }
 
 /* ============ 页面切换 ============ */
@@ -259,7 +274,7 @@ async function loadRow(type){
     // 异步加载海报（走代理，解决豆瓣防盗链黑块）
     Array.prototype.forEach.call(box.querySelectorAll('img[data-src]'), function(img){
       if(img.dataset.src){
-        proxyImg(img.dataset.src).then(function(u){img.src=u;}).catch(function(){});
+        setProxyImage(img, img.dataset.src);
       }
     });
     Array.prototype.forEach.call(box.querySelectorAll('.card'), function(el){
@@ -274,7 +289,7 @@ async function buildHero(list){
   var pool=[]; for(var i=0;i<list.length;i++){ if(parseFloat(list[i].rate)>=7.5) pool.push(list[i]); }
   var pick=(pool.length?pool:list)[0]; if(!pick) return;
   var hero=document.getElementById('hero');
-  try{ document.getElementById('hero-img').src = await proxyImg(pick.cover||''); }catch(e){}
+  setProxyImage(document.getElementById('hero-img'), pick.cover||'');
   document.getElementById('hero-title').textContent = pick.title||'';
   document.getElementById('hero-meta').textContent = pick.rate?('豆瓣评分 '+pick.rate):'';
   hero.dataset.title = pick.title||'';
@@ -341,7 +356,7 @@ async function doSearch(kw){
   window._tvResults=uniq;
   Array.prototype.forEach.call(grid.querySelectorAll('img[data-pic]'),function(img){
     if(img.dataset.pic && /^https?:/.test(img.dataset.pic)){
-      proxyImg(img.dataset.pic).then(function(u){img.src=u;}).catch(function(){});
+      setProxyImage(img, img.dataset.pic);
     }
   });
   Array.prototype.forEach.call(grid.querySelectorAll('.rcard'),function(el){
