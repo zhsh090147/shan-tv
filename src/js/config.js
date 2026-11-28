@@ -283,3 +283,48 @@ const CUSTOM_API_CONFIG = {
 };
 
 // 隐藏内置黄色采集站API的变量
+
+/* ===== APK 专用：代理自动回退（本地优先，失败切 Cloudflare） =====
+   逻辑：所有 /proxy/ 请求先走 APK 内置本地服务器；
+   若本地返回非 2xx 或网络错误（电视端本地服务偶发失败），自动改用线上 CF 代理重试。
+   网页版线上部署不受影响（CF 同源，本地路径本就可用）。 */
+(function(){
+  if (window.__proxyFallbackInstalled) return;
+  window.__proxyFallbackInstalled = true;
+  var CF = 'https://libretv-74y.pages.dev/proxy/';
+  var origFetch = window.fetch.bind(window);
+  var cfDownUntil = 0;  // CF 熔断时间：连续失败后暂时不再尝试
+  function toCF(localUrl){
+    // localUrl 形如 /proxy/<encoded>?auth=xxx&t=xxx —— 保留 auth 参数
+    if (localUrl.charAt(0) === '/') return CF + localUrl.slice(1);
+    return CF + localUrl;
+  }
+  window.fetch = function(input, init){
+    var u = (typeof input === 'string') ? input : ((input && input.url) || '');
+    var isProxy = u.indexOf('/proxy/') === 0;
+    var isCF = u.indexOf(CF) === 0;
+    if (!isProxy && !isCF) return origFetch(input, init);
+    // 尝试函数：本地成功即返回；失败则切 CF
+    function tryLocal(){
+      return origFetch(input, init).then(function(r){
+        if (r && (r.status === 401 || r.status === 403 || r.status >= 500)) {
+          // 本地代理异常，切 CF（保留 auth）
+          if (Date.now() >= cfDownUntil) return origFetch(toCF(u), init).catch(function(){ return r; });
+        }
+        return r;
+      }).catch(function(e){
+        if (Date.now() >= cfDownUntil) return origFetch(toCF(u), init).catch(function(){ throw e; });
+        throw e;
+      });
+    }
+    // 已是 CF 地址则直接走（并记录失败用于熔断）
+    if (isCF) {
+      return origFetch(input, init).catch(function(e){
+        var last = Date.now();
+        cfDownUntil = last + 30000;  // 30 秒内不再尝试 CF
+        throw e;
+      });
+    }
+    return tryLocal();
+  };
+})();
